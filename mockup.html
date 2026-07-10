@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tira Dúvidas Eleitoral — Mockup</title>
+<!--
+  MOCKUP ESTÁTICO — base para a implementação Django.
+  Mapeamento sugerido (ver lógica.md):
+    - Aba "Perguntas"  → app `perguntas`  · view POST /perguntar/   (Serviço 1, §4)
+    - Aba "Material"   → app `materiais`  · view POST /analisar/    (Serviço 2, §6)
+    - Gate de intenção (§3) → camada de serviço antes de chamar a LLM
+    - Bloco de fontes  → só norma/jurisprudência válida (§1, §4, §7 — regra inviolável)
+    - Disclaimer (§9)  → partial reutilizável {% include "partials/_disclaimer.html" %}
+  O JS aqui é só para demonstrar os estados da tela; no Django vem do backend.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#151a1e; --ink-soft:#3d474e; --muted:#6b7780;
+    --paper:#f4f1ea; --card:#fffefb; --line:#e2ddd2;
+    --brand:#0f5c4a;           /* verde institucional profundo */
+    --brand-soft:#e6efe9;
+    --gold:#a9812f;            /* acento quente */
+    --ok:#1f7a4d; --ok-bg:#e6f2ea;
+    --warn:#9a6a12; --warn-bg:#faf1dd;
+    --bad:#a12f2f; --bad-bg:#f7e5e3;
+    --neutral:#5a6570; --neutral-bg:#eceff1;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(20,26,30,.04), 0 8px 30px rgba(20,26,30,.06);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:
+      radial-gradient(120% 90% at 100% 0%, #efeadf 0%, transparent 60%),
+      var(--paper);
+    color:var(--ink); line-height:1.55; -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:0 24px}
+
+  /* ---------- Topbar ---------- */
+  header.top{
+    border-bottom:1px solid var(--line);
+    background:rgba(255,254,251,.7); backdrop-filter:blur(8px);
+    position:sticky; top:0; z-index:10;
+  }
+  .top-inner{display:flex; align-items:center; justify-content:space-between; padding:16px 24px; max-width:1080px; margin:0 auto}
+  .brand{display:flex; align-items:center; gap:12px}
+  .seal{
+    width:40px; height:40px; border-radius:10px; flex:none;
+    background:linear-gradient(145deg,var(--brand),#0a3f33);
+    display:grid; place-items:center; color:#fff; font-family:'Fraunces',serif; font-weight:600; font-size:20px;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);
+  }
+  .brand h1{font-family:'Fraunces',serif; font-weight:600; font-size:19px; margin:0; letter-spacing:-.2px}
+  .brand span{display:block; font-size:12px; color:var(--muted); font-weight:450}
+  .scope-pill{
+    font-size:12px; color:var(--brand); background:var(--brand-soft);
+    border:1px solid #cfe0d7; padding:6px 12px; border-radius:999px; font-weight:500;
+  }
+
+  /* ---------- Hero / tabs ---------- */
+  .hero{padding:34px 0 8px}
+  .hero p.kicker{color:var(--gold); font-weight:600; font-size:13px; letter-spacing:.4px; text-transform:uppercase; margin:0 0 6px}
+  .hero h2{font-family:'Fraunces',serif; font-weight:500; font-size:30px; line-height:1.2; margin:0 0 8px; max-width:640px}
+  .hero .lede{color:var(--ink-soft); max-width:620px; margin:0}
+
+  .tabs{display:flex; gap:6px; margin:26px 0 0; border-bottom:1px solid var(--line)}
+  .tab{
+    appearance:none; border:0; background:none; cursor:pointer;
+    font-family:inherit; font-size:15px; font-weight:500; color:var(--muted);
+    padding:12px 16px; border-bottom:2px solid transparent; margin-bottom:-1px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .tab .ico{width:18px; height:18px}
+  .tab[aria-selected="true"]{color:var(--brand); border-bottom-color:var(--brand)}
+
+  main{padding:26px 0 60px}
+  .panel[hidden]{display:none}
+
+  /* ---------- Cards ---------- */
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow)}
+  .grid{display:grid; grid-template-columns:1fr 320px; gap:22px; align-items:start}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}}
+
+  /* ---------- Chat (Serviço 1) ---------- */
+  .chat{padding:22px}
+  .msg{display:flex; gap:12px; margin-bottom:20px}
+  .avatar{width:32px; height:32px; border-radius:9px; flex:none; display:grid; place-items:center; font-size:13px; font-weight:600}
+  .avatar.user{background:#e7e2d6; color:var(--ink-soft)}
+  .avatar.bot{background:linear-gradient(145deg,var(--brand),#0a3f33); color:#fff; font-family:'Fraunces',serif}
+  .bubble{flex:1}
+  .bubble .who{font-size:12px; color:var(--muted); margin-bottom:3px; font-weight:500}
+  .bubble .body{font-size:15px; color:var(--ink)}
+  .bubble .body p{margin:0 0 10px}
+  .sources{margin-top:12px; border-top:1px dashed var(--line); padding-top:12px}
+  .sources h4{margin:0 0 8px; font-size:12px; text-transform:uppercase; letter-spacing:.4px; color:var(--gold)}
+  .src{display:flex; gap:10px; align-items:baseline; font-size:13.5px; padding:5px 0}
+  .src .tag{font-size:11px; font-weight:600; padding:2px 7px; border-radius:6px; flex:none}
+  .tag.norma{background:var(--brand-soft); color:var(--brand)}
+  .tag.juris{background:#eae6f2; color:#4a3d78}
+  .src .cite{color:var(--ink-soft)}
+  .src .vig{color:var(--muted); font-size:12px}
+  .disclaimer{margin-top:14px; font-size:12.5px; color:var(--muted); background:#faf8f2; border:1px solid var(--line); border-radius:10px; padding:10px 12px}
+
+  .offtopic{background:linear-gradient(180deg,#fff,#fbf7ee); border-style:dashed}
+
+  /* composer */
+  .composer{border-top:1px solid var(--line); padding:14px 16px; display:flex; gap:10px; align-items:flex-end}
+  .composer textarea{
+    flex:1; resize:none; border:1px solid var(--line); border-radius:12px; padding:11px 14px;
+    font-family:inherit; font-size:15px; color:var(--ink); background:#fff; min-height:46px; max-height:140px;
+  }
+  .composer textarea:focus{outline:2px solid var(--brand-soft); border-color:var(--brand)}
+  .send{
+    background:var(--brand); color:#fff; border:0; border-radius:12px; padding:12px 18px;
+    font-family:inherit; font-weight:600; font-size:14px; cursor:pointer; flex:none;
+  }
+  .send:hover{background:#0a4a3b}
+  .suggests{display:flex; flex-wrap:wrap; gap:8px; padding:0 16px 16px}
+  .chip{
+    font-size:13px; color:var(--ink-soft); background:#fff; border:1px solid var(--line);
+    border-radius:999px; padding:7px 13px; cursor:pointer;
+  }
+  .chip:hover{border-color:var(--brand); color:var(--brand)}
+
+  /* ---------- Upload (Serviço 2) ---------- */
+  .drop{
+    border:1.5px dashed #cdc6b6; border-radius:var(--radius); background:#fffdf8;
+    padding:40px 24px; text-align:center; cursor:pointer; transition:.15s;
+  }
+  .drop:hover{border-color:var(--brand); background:var(--brand-soft)}
+  .drop .big{font-family:'Fraunces',serif; font-size:19px; margin:12px 0 4px}
+  .drop small{color:var(--muted)}
+  .formats{display:flex; gap:8px; justify-content:center; margin-top:14px; flex-wrap:wrap}
+  .fmt{font-size:11px; font-weight:600; color:var(--ink-soft); background:#efe9db; border-radius:6px; padding:3px 9px}
+
+  .parecer{padding:22px}
+  .status-badge{display:inline-flex; align-items:center; gap:8px; font-weight:600; font-size:14px; padding:7px 14px; border-radius:999px}
+  .st-warn{background:var(--warn-bg); color:var(--warn)}
+  .st-ok{background:var(--ok-bg); color:var(--ok)}
+  .st-bad{background:var(--bad-bg); color:var(--bad)}
+  .st-neu{background:var(--neutral-bg); color:var(--neutral)}
+  .peca-head{display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:6px}
+  .peca-head .pname{font-size:13px; color:var(--muted)}
+  .check{display:flex; gap:11px; padding:11px 0; border-top:1px solid var(--line); font-size:14.5px}
+  .check .mark{flex:none; width:20px; height:20px; border-radius:50%; display:grid; place-items:center; font-size:12px; font-weight:700; color:#fff; margin-top:1px}
+  .m-ok{background:var(--ok)} .m-bad{background:var(--bad)} .m-warn{background:var(--warn)}
+  .check .det{flex:1}
+  .check .fund{display:block; font-size:12.5px; color:var(--muted); margin-top:2px}
+  .batch-nav{display:flex; gap:6px; margin-bottom:16px}
+  .batch-nav button{font-size:13px; border:1px solid var(--line); background:#fff; border-radius:8px; padding:6px 12px; cursor:pointer; font-family:inherit}
+  .batch-nav button.active{background:var(--brand); color:#fff; border-color:var(--brand)}
+
+  /* ---------- Sidebar ---------- */
+  aside .card{padding:18px; margin-bottom:18px}
+  aside h3{font-family:'Fraunces',serif; font-weight:600; font-size:15px; margin:0 0 12px}
+  .flow{list-style:none; margin:0; padding:0; counter-reset:s}
+  .flow li{position:relative; padding:0 0 14px 30px; font-size:13.5px; color:var(--ink-soft); counter-increment:s}
+  .flow li::before{content:counter(s); position:absolute; left:0; top:0; width:20px; height:20px; border-radius:50%; background:var(--brand-soft); color:var(--brand); font-size:11px; font-weight:700; display:grid; place-items:center}
+  .flow li::after{content:""; position:absolute; left:9.5px; top:20px; bottom:2px; width:1px; background:var(--line)}
+  .flow li:last-child{padding-bottom:0}
+  .flow li:last-child::after{display:none}
+  .subjects{display:flex; flex-direction:column; gap:8px}
+  .subj{display:flex; align-items:center; gap:10px; font-size:13.5px; color:var(--ink-soft); padding:8px 10px; background:#faf8f2; border-radius:9px}
+  .subj .dot{width:8px; height:8px; border-radius:50%; background:var(--brand)}
+  .note{font-size:12.5px; color:var(--muted); border-left:2px solid var(--gold); padding-left:10px; margin-top:4px}
+  footer{border-top:1px solid var(--line); padding:22px 0; color:var(--muted); font-size:12.5px}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <div class="seal">TD</div>
+      <div>
+        <h1>Tira Dúvidas Eleitoral</h1>
+        <span>Inteligência para advogados e partidos</span>
+      </div>
+    </div>
+    <div class="scope-pill">Brasil · todas as eleições</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="hero">
+    <p class="kicker">Fonte primária: RAG eleitoral + IA</p>
+    <h2>Direito eleitoral, contabilidade de campanha e impulsionamento — com fundamento.</h2>
+    <p class="lede">Duas ferramentas, ancoradas na legislação e na jurisprudência válidas. Nada de achismo: toda resposta cita a norma que a sustenta.</p>
+
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" aria-controls="p-perguntas" id="t-perguntas" onclick="showTab('perguntas')">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Perguntas eleitorais
+      </button>
+      <button class="tab" role="tab" aria-selected="false" aria-controls="p-material" id="t-material" onclick="showTab('material')">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Análise de material gráfico
+      </button>
+    </div>
+  </section>
+
+  <main>
+    <!-- ============ SERVIÇO 1: PERGUNTAS ============ -->
+    <section class="panel" id="p-perguntas" role="tabpanel" aria-labelledby="t-perguntas">
+      <div class="grid">
+        <div class="card">
+          <div class="chat">
+
+            <!-- Pergunta on-topic com resposta ancorada -->
+            <div class="msg">
+              <div class="avatar user">Dr</div>
+              <div class="bubble">
+                <div class="who">Advogado · 14:02</div>
+                <div class="body"><p>Posso impulsionar publicações do meu candidato no Instagram durante a campanha?</p></div>
+              </div>
+            </div>
+
+            <div class="msg">
+              <div class="avatar bot">t</div>
+              <div class="bubble">
+                <div class="who">Tira Dúvidas · impulsionamento eleitoral</div>
+                <div class="body">
+                  <p>Sim, o impulsionamento pago de conteúdo é <strong>permitido</strong>, mas com condições: só pode ser contratado por candidato, partido ou coligação, deve ser <strong>identificado</strong> como propaganda e contratado junto ao provedor da plataforma, sendo <strong>vedado</strong> o impulsionamento por terceiros e o direcionamento vedado em lei.</p>
+                  <p>Todo gasto precisa constar na prestação de contas de campanha.</p>
+
+                  <div class="sources">
+                    <h4>Fontes (norma e jurisprudência válidas)</h4>
+                    <div class="src">
+                      <span class="tag norma">Norma</span>
+                      <span class="cite">Lei nº 9.504/1997, art. 57-C <span class="vig">· vigente</span></span>
+                    </div>
+                    <div class="src">
+                      <span class="tag norma">Norma</span>
+                      <span class="cite">Res. TSE nº 23.610/2019, arts. 27 a 29 <span class="vig">· ciclo vigente</span></span>
+                    </div>
+                    <div class="src">
+                      <span class="tag juris">Jurisprudência</span>
+                      <span class="cite">TSE, RP nº 0601xxx — impulsionamento por terceiro <span class="vig">· pertinente</span></span>
+                    </div>
+                  </div>
+
+                  <div class="disclaimer">Esta resposta tem caráter informativo e de apoio, não substitui análise jurídica individualizada nem parecer oficial da Justiça Eleitoral. Confirme sempre a legislação vigente e os prazos do seu caso.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Exemplo off-topic (recusa descontraída) — clique no chip abaixo -->
+            <div class="msg offtopic-demo" hidden>
+              <div class="avatar bot">t</div>
+              <div class="bubble">
+                <div class="who">Tira Dúvidas · fora de escopo</div>
+                <div class="body card offtopic" style="padding:14px 16px">
+                  <p style="margin:0">Haha, adoraria — mas confesso que minha praia é urna, não forno. 🗳️ Eu cuido de <strong>direito eleitoral, contabilidade de campanha e impulsionamento</strong>. Se tiver dúvida nesses temas, é só mandar!</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="suggests">
+            <button class="chip" onclick="fill('Qual o limite de gasto para vereador nesta eleição?')">Limite de gasto p/ vereador</button>
+            <button class="chip" onclick="fill('Quais dados são obrigatórios em um santinho?')">Dados obrigatórios no santinho</button>
+            <button class="chip" onclick="showOfftopic()">↪ Ver exemplo fora de escopo</button>
+          </div>
+
+          <div class="composer">
+            <textarea id="q" placeholder="Escreva sua dúvida sobre direito, contabilidade ou impulsionamento eleitoral..."></textarea>
+            <button class="send">Perguntar</button>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside>
+          <div class="card">
+            <h3>Como a resposta é construída</h3>
+            <ol class="flow">
+              <li>Classifica a intenção — está no escopo eleitoral?</li>
+              <li>Busca primeiro no <strong>RAG</strong> (norma + jurisprudência)</li>
+              <li>A IA redige ancorada nos trechos recuperados</li>
+              <li>Cita a fonte válida e a vigência</li>
+              <li>Sem base segura → admite incerteza, não chuta</li>
+            </ol>
+            <p class="note">Doutrina, cursos e anexos internos ajudam a redigir, mas <strong>nunca</strong> são citados como fonte.</p>
+          </div>
+          <div class="card">
+            <h3>Escopo atendido</h3>
+            <div class="subjects">
+              <div class="subj"><span class="dot"></span> Direito eleitoral</div>
+              <div class="subj"><span class="dot"></span> Contabilidade eleitoral</div>
+              <div class="subj"><span class="dot"></span> Impulsionamento eleitoral</div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ============ SERVIÇO 2: MATERIAL GRÁFICO ============ -->
+    <section class="panel" id="p-material" role="tabpanel" aria-labelledby="t-material" hidden>
+      <div class="grid">
+        <div>
+          <div class="card" style="padding:22px; margin-bottom:18px">
+            <div class="drop" onclick="document.getElementById('file').click()">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <div class="big">Envie o santinho ou peça gráfica</div>
+              <small>Arraste aqui ou clique para selecionar · lote permitido</small>
+              <div class="formats"><span class="fmt">JPG</span><span class="fmt">PNG</span><span class="fmt">PDF</span><span class="fmt">+ múltiplas peças</span></div>
+              <input type="file" id="file" hidden multiple accept=".jpg,.jpeg,.png,.pdf">
+            </div>
+          </div>
+
+          <!-- Parecer de exemplo (lote com 2 peças) -->
+          <div class="card parecer">
+            <div class="batch-nav">
+              <button class="active">Peça 1 · santinho-frente.jpg</button>
+              <button>Peça 2 · adesivo.png</button>
+            </div>
+
+            <div class="peca-head">
+              <span class="status-badge st-warn">⚠ Conformidade parcial</span>
+              <span class="pname">santinho-frente.jpg · 1200×630</span>
+            </div>
+
+            <div style="margin-top:14px">
+              <div class="check">
+                <span class="mark m-ok">✓</span>
+                <span class="det">Número do candidato e cargo identificados corretamente.
+                  <span class="fund">Fundamento: Res. TSE nº 23.610/2019</span></span>
+              </div>
+              <div class="check">
+                <span class="mark m-bad">!</span>
+                <span class="det">Falta o <strong>CNPJ do responsável</strong> pela confecção e a <strong>tiragem</strong> impressa na peça.
+                  <span class="fund">Fundamento: Lei nº 9.504/1997, art. 38, §1º</span></span>
+              </div>
+              <div class="check">
+                <span class="mark m-warn">?</span>
+                <span class="det">Uso de imagem que pode remeter a órgão público — verificar autorização.
+                  <span class="fund">Fundamento: Res. TSE nº 23.610/2019, propaganda vedada</span></span>
+              </div>
+            </div>
+
+            <div class="sources" style="margin-top:18px">
+              <h4>Recomendações</h4>
+              <div class="body" style="font-size:14px; color:var(--ink-soft)">
+                Inserir CNPJ do responsável e tiragem no rodapé; revisar a imagem de fundo antes da impressão.
+              </div>
+            </div>
+
+            <div class="sources">
+              <h4>Fontes (apenas norma / jurisprudência válida)</h4>
+              <div class="src"><span class="tag norma">Norma</span><span class="cite">Lei nº 9.504/1997, art. 38 <span class="vig">· vigente</span></span></div>
+              <div class="src"><span class="tag norma">Norma</span><span class="cite">Res. TSE nº 23.610/2019 <span class="vig">· ciclo vigente</span></span></div>
+            </div>
+
+            <div class="disclaimer">Análise de apoio — não substitui conferência jurídica nem decisão da Justiça Eleitoral. Peça pode ter validade temporal conforme o calendário eleitoral.</div>
+          </div>
+        </div>
+
+        <aside>
+          <div class="card">
+            <h3>Como a peça é avaliada</h3>
+            <ol class="flow">
+              <li>Gate: é material de campanha eleitoral BR?</li>
+              <li>Valida formato (JPG/PNG/PDF) e legibilidade</li>
+              <li>Extrai texto e elementos (visão + OCR)</li>
+              <li>Confronta com as regras do RAG</li>
+              <li>Emite um parecer por peça, com status</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>Status possíveis</h3>
+            <div class="subjects">
+              <div class="subj"><span class="status-badge st-ok" style="padding:2px 10px">✓ Em conformidade</span></div>
+              <div class="subj"><span class="status-badge st-warn" style="padding:2px 10px">⚠ Parcial</span></div>
+              <div class="subj"><span class="status-badge st-bad" style="padding:2px 10px">✕ Não conforme</span></div>
+              <div class="subj"><span class="status-badge st-neu" style="padding:2px 10px">? Inconclusivo</span></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <div class="wrap">Tira Dúvidas Eleitoral · mockup estático para a implementação Django · respostas fundamentadas em norma e jurisprudência vigentes.</div>
+</footer>
+
+<script>
+  function showTab(name){
+    document.getElementById('p-perguntas').hidden = name!=='perguntas';
+    document.getElementById('p-material').hidden  = name!=='material';
+    document.getElementById('t-perguntas').setAttribute('aria-selected', name==='perguntas');
+    document.getElementById('t-material').setAttribute('aria-selected', name==='material');
+  }
+  function fill(t){ const q=document.getElementById('q'); q.value=t; q.focus(); }
+  function showOfftopic(){ document.querySelector('.offtopic-demo').hidden=false; window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}); }
+</script>
+</body>
+</html>

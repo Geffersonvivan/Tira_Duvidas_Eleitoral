@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["config", "core", "rag", "llm", "perguntas", "materiais"]
+
+[project]
+name = "tira-duvidas-eleitoral"
+version = "0.1.0"
+description = "Inteligência para advogados e partidos: direito, contabilidade e impulsionamento eleitoral (RAG + Claude)."
+requires-python = ">=3.12"
+dependencies = [
+    "Django>=5.1,<5.2",
+    "djangorestframework>=3.15",
+    "anthropic>=0.40",           # SDK Claude (resposta + visão)
+    "httpx>=0.27",               # chamadas HTTP (embeddings Voyage)
+    "psycopg[binary]>=3.2",      # Postgres
+    "pgvector>=0.3",             # embeddings/RAG no Postgres
+    "pillow>=11.0",              # leitura/validação de imagem (Serviço 2)
+    "pypdf>=5.0",                # extração de página/imagem de PDF
+    "python-dotenv>=1.0",        # variáveis de ambiente
+    "gunicorn>=23.0",            # servidor de produção
+    "whitenoise>=6.7",           # servir estáticos em produção
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.8",                 # lint + format
+    "pip-audit>=2.7",            # varredura de vulnerabilidades em dependências
+    "pytest>=8.3",
+    "pytest-django>=4.9",
+    "pre-commit>=4.0",
+]
+
+# ----------------------------------------------------------------------
+# Ruff — lint + format (substitui flake8/isort/black)
+# ----------------------------------------------------------------------
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["migrations"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes
+    "I",        # isort (ordenação de imports)
+    "UP",       # pyupgrade
+    "B",        # flake8-bugbear
+    "S",        # flake8-bandit (segurança)
+    "DJ",       # flake8-django
+    "C4",       # comprehensions
+    "SIM",      # simplificações
+    "PTH",      # use pathlib
+]
+ignore = [
+    "S101",     # uso de assert (permitido em testes)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"*/tests/*" = ["S"]              # relaxa regras de segurança nos testes
+"settings*.py" = ["S105", "S106"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+# ----------------------------------------------------------------------
+# pytest
+# ----------------------------------------------------------------------
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]

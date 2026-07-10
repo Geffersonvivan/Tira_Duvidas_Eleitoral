@@ -1,0 +1,140 @@
+/* Tira Dúvidas Eleitoral — sistema visual
+   Minimalismo preciso. Assinatura: as citações legais em mono (bloco de Fontes). */
+:root{
+  --ink:#18211d; --ink-soft:#4a544e; --muted:#7b847e;
+  --paper:#eceee8; --paper-2:#f4f5f0; --surface:#ffffff; --line:#dde0d8;
+  --brand:#15594a; --brand-ink:#0d3b30; --brand-soft:#e4efe9;
+  --accent:#a97e2c;
+  --ok:#1c7a4d; --ok-bg:#e7f2ea;
+  --warn:#8f6410; --warn-bg:#f7edd6;
+  --bad:#a5342f; --bad-bg:#f6e4e1;
+  --neutral:#5a6570; --neutral-bg:#ebeeef;
+  --r:16px; --r-sm:10px;
+  --shadow:0 1px 2px rgba(20,30,25,.04), 0 12px 34px -14px rgba(20,30,25,.14);
+  --mono:'Spline Sans Mono',ui-monospace,monospace;
+  --serif:'Fraunces',Georgia,serif;
+  --wrap:920px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--paper); color:var(--ink);
+  line-height:1.6; -webkit-font-smoothing:antialiased; min-height:100vh;
+}
+.wrap{max-width:var(--wrap); margin:0 auto; padding:0 24px}
+a{color:var(--brand)}
+:focus-visible{outline:2px solid var(--brand); outline-offset:2px; border-radius:4px}
+
+/* ---------- Header ---------- */
+header.top{border-bottom:1px solid var(--line); background:rgba(236,238,232,.82); backdrop-filter:blur(10px); position:sticky; top:0; z-index:10}
+.top-inner{display:flex; align-items:center; justify-content:center; max-width:var(--wrap); margin:0 auto; padding:16px 24px}
+.brand{display:flex; align-items:center; gap:12px}
+.seal{width:38px; height:38px; border-radius:10px; flex:none; background:linear-gradient(150deg,var(--brand),var(--brand-ink)); display:grid; place-items:center; box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.seal svg{display:block; width:23px; height:23px}
+.brand h1{font-family:var(--serif); font-weight:600; font-size:18px; margin:0; letter-spacing:-.01em}
+.brand span{display:block; font-size:12px; color:var(--muted); font-weight:450}
+
+/* ---------- Hero ---------- */
+.hero{padding:52px 0 10px; text-align:center}
+.hero h2{font-family:var(--serif); font-weight:500; font-size:clamp(26px,4.2vw,34px); line-height:1.28; letter-spacing:-.015em; margin:0 auto 22px; max-width:44ch; text-wrap:balance}
+.hero .lede{color:var(--ink-soft); max-width:52ch; margin:0 auto; font-size:16px; line-height:1.7; text-wrap:balance}
+
+/* ---------- Tabs (segmented control) ---------- */
+.tabs{display:inline-flex; gap:4px; margin:30px 0 0; padding:4px; background:var(--paper-2); border:1px solid var(--line); border-radius:12px}
+.tab{appearance:none; border:0; background:none; cursor:pointer; font-family:inherit; font-size:14px; font-weight:500; color:var(--muted); padding:9px 15px; border-radius:9px; display:flex; align-items:center; gap:8px; transition:color .15s, background .15s}
+.tab .ico{width:17px; height:17px; opacity:.85}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--surface); color:var(--brand); box-shadow:0 1px 2px rgba(20,30,25,.08)}
+
+main{padding:22px 0 72px}
+.panel[hidden]{display:none}
+.panel{animation:rise .28s ease}
+@keyframes rise{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+
+/* ---------- Cards ---------- */
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow)}
+
+/* ---------- Chat (Serviço 1) ---------- */
+/* Chat estilo GPT/Claude: card de altura fixa, mensagens rolam por dentro,
+   composer preso no rodapé. */
+.panel[data-panel="perguntas"] .card{display:flex; flex-direction:column; height:calc(100dvh - 250px); min-height:440px; max-height:760px; overflow:hidden}
+.chat{padding:26px 28px; display:flex; flex-direction:column; gap:24px; flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain}
+.chat::-webkit-scrollbar{width:10px}
+.chat::-webkit-scrollbar-thumb{background:var(--line); border-radius:99px; border:3px solid var(--surface)}
+.msg{display:flex; gap:14px}
+.avatar{width:34px; height:34px; border-radius:10px; flex:none; display:grid; place-items:center; font-size:12px; font-weight:600}
+.avatar.user{background:var(--paper-2); color:var(--ink-soft); border:1px solid var(--line)}
+.avatar.bot{background:linear-gradient(150deg,var(--brand),var(--brand-ink)); color:#fff}
+.avatar.bot svg{display:block; width:21px; height:21px}
+.bubble{flex:1; max-width:680px}
+.bubble .who{font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:6px}
+.bubble .body{font-size:15.5px; color:var(--ink)}
+.bubble .body p{margin:0 0 10px}
+.bubble .body p:last-child{margin-bottom:0}
+
+/* ---------- Fontes: a assinatura (citação em mono) ---------- */
+.sources{margin-top:18px; padding-top:15px; border-top:1px solid var(--line)}
+.sources h4{font-family:var(--mono); font-weight:600; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:0 0 12px}
+.src{display:grid; grid-template-columns:auto 1fr; gap:11px; align-items:baseline; padding:7px 0 7px 13px; border-left:2px solid var(--brand-soft)}
+.src+.src{margin-top:2px}
+.src .tag{font-family:var(--mono); font-weight:600; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; padding:3px 8px; border-radius:5px; white-space:nowrap}
+.tag.norma{background:var(--brand); color:#fff}
+.tag.jurisprudencia{background:#2d2742; color:#fff}
+.src .cite{font-family:var(--mono); font-size:12.5px; line-height:1.45; color:var(--ink-soft)}
+
+.disclaimer{margin-top:16px; font-size:12.5px; color:var(--muted); padding:11px 14px; background:var(--paper-2); border:1px solid var(--line); border-radius:var(--r-sm)}
+.offtopic{background:var(--brand-soft); border:1px solid #cfe0d8; border-radius:12px; padding:14px 16px; font-size:15px; color:var(--brand-ink)}
+
+/* ---------- Composer ---------- */
+.composer{border-top:1px solid var(--line); padding:16px 20px; display:flex; gap:10px; align-items:flex-end}
+.composer textarea{flex:1; resize:none; border:1px solid var(--line); border-radius:12px; padding:12px 14px; font-family:inherit; font-size:15px; color:var(--ink); background:var(--surface); min-height:48px; max-height:150px; transition:border-color .15s, box-shadow .15s}
+.composer textarea::placeholder{color:var(--muted)}
+.composer textarea:focus{outline:none; border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-soft)}
+.send{background:var(--brand); color:#fff; border:0; border-radius:12px; padding:0 20px; height:48px; font-family:inherit; font-weight:600; font-size:14px; cursor:pointer; flex:none; transition:background .15s}
+.send:hover{background:var(--brand-ink)}
+.send:disabled{opacity:.5; cursor:default}
+
+.suggests{display:flex; flex-wrap:wrap; gap:8px; padding:0 20px 18px}
+.chip{font-family:var(--mono); font-size:12px; color:var(--ink-soft); background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:7px 13px; cursor:pointer; transition:.15s}
+.chip:hover{border-color:var(--brand); color:var(--brand); background:var(--brand-soft)}
+
+/* ---------- Upload (Serviço 2) ---------- */
+.drop{border:1.5px dashed #c8ccbf; border-radius:var(--r); background:var(--paper-2); padding:46px 24px; text-align:center; cursor:pointer; transition:.18s}
+.drop:hover{border-color:var(--brand); background:var(--brand-soft)}
+.drop .big{font-family:var(--serif); font-weight:500; font-size:19px; margin:14px 0 4px}
+.drop small{color:var(--muted); font-size:13px}
+.formats{display:flex; gap:8px; justify-content:center; margin-top:16px; flex-wrap:wrap}
+.fmt{font-family:var(--mono); font-size:10.5px; font-weight:500; letter-spacing:.04em; color:var(--ink-soft); background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:4px 9px}
+
+/* ---------- Parecer ---------- */
+.parecer{padding:24px; margin-top:18px}
+.peca-head{display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:16px}
+.peca-head .pname{font-family:var(--mono); font-size:12px; color:var(--muted)}
+.status-badge{display:inline-flex; align-items:center; gap:7px; font-weight:600; font-size:13.5px; padding:7px 14px; border-radius:999px}
+.st-conforme{background:var(--ok-bg); color:var(--ok)}
+.st-parcial{background:var(--warn-bg); color:var(--warn)}
+.st-nao_conforme{background:var(--bad-bg); color:var(--bad)}
+.st-inconclusivo{background:var(--neutral-bg); color:var(--neutral)}
+.check{display:flex; gap:12px; padding:13px 0; border-top:1px solid var(--line); font-size:14.5px}
+.check .mark{flex:none; width:20px; height:20px; border-radius:50%; display:grid; place-items:center; font-size:11px; font-weight:700; color:#fff; margin-top:2px}
+.m-true{background:var(--ok)} .m-false{background:var(--bad)} .m-null{background:var(--warn)}
+.check .det{flex:1}
+.check .fund{display:block; font-family:var(--mono); font-size:11.5px; color:var(--muted); margin-top:4px}
+
+/* ---------- States / footer ---------- */
+.spinner{display:flex; align-items:center; gap:9px; color:var(--muted); font-size:14px}
+.spinner::before{content:""; width:14px; height:14px; border:2px solid var(--line); border-top-color:var(--brand); border-radius:50%; animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+footer{border-top:1px solid var(--line); padding:24px 0; color:var(--muted); font-size:12.5px}
+footer .wrap{font-family:var(--mono); letter-spacing:.02em; text-align:center}
+
+@media(max-width:600px){
+  .hero{padding:34px 0 6px}
+  .chat{padding:20px}
+  .tabs{width:100%}
+  .tab{flex:1; justify-content:center}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none !important; transition:none !important}
+}

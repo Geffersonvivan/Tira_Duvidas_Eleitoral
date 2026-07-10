@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Django
+*.sqlite3
+/media/
+/staticfiles/
+
+# Segredos
+.env
+
+# SO / editor
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<section class="hero">
+  <h2>Direito eleitoral, contabilidade de campanha e impulsionamento — com fundamento.</h2>
+  <p class="lede">Duas ferramentas, ancoradas na legislação e na jurisprudência válidas. Toda resposta cita a norma que a sustenta.</p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-tab="perguntas">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Perguntas eleitorais
+    </button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="material">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Análise de material gráfico
+    </button>
+  </div>
+</section>
+
+<main>
+  <!-- ===== Serviço 1 ===== -->
+  <section class="panel" data-panel="perguntas">
+    <div class="card">
+      <div class="chat" id="chat">
+        <div class="msg">
+          <div class="avatar bot"><svg viewBox="0 0 32 32"><path d="M8 9.5 h16 a1.8 1.8 0 0 1 1.8 1.8 v6.4 a1.8 1.8 0 0 1 -1.8 1.8 h-8 l-4.5 3.2 v-3.2 h-3.5 a1.8 1.8 0 0 1 -1.8 -1.8 v-6.4 a1.8 1.8 0 0 1 1.8 -1.8 z" fill="none" stroke="#fff" stroke-width="1.9" stroke-linejoin="round"/><path d="M11.5 14.4 l2.4 2.4 L20 11.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="bubble">
+            <div class="who">Tira-Dúvidas</div>
+            <div class="body"><p>Pergunte sobre <strong>direito eleitoral, contabilidade de campanha ou impulsionamento</strong>. Respondo com base na legislação e cito a norma que sustenta cada resposta.</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="composer">
+        <textarea id="q" placeholder="Escreva sua dúvida sobre direito, contabilidade ou impulsionamento eleitoral..."></textarea>
+        <button class="send" id="btn-perguntar">Perguntar</button>
+      </div>
+      <div class="suggests">
+        <button class="chip" data-fill="Posso impulsionar publicações do meu candidato no Instagram?">Impulsionamento no Instagram</button>
+        <button class="chip" data-fill="Quais dados são obrigatórios em um santinho?">Dados obrigatórios no santinho</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Serviço 2 ===== -->
+  <section class="panel" data-panel="material" hidden>
+    <div class="card" style="padding:22px">
+      <div class="drop" id="drop">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div class="big">Envie o santinho ou peça gráfica</div>
+        <small>Clique para selecionar — pode enviar várias de uma vez</small>
+        <div class="formats"><span class="fmt">JPG</span><span class="fmt">PNG</span><span class="fmt">PDF</span><span class="fmt">+ múltiplas peças</span></div>
+        <input type="file" id="file" hidden multiple accept=".jpg,.jpeg,.png,.pdf">
+      </div>
+    </div>
+    <div id="pareceres"></div>
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/app.js' %}?v=7"></script>
+{% endblock %}
