@@ -42,6 +42,11 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    # HSTS — o site é servido só por HTTPS (Railway + redirect acima).
+    # Configurável; 0 desliga. includeSubDomains/preload são opt-in (cuidado).
+    SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_HSTS_SECONDS", "31536000"))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = _env_bool("DJANGO_HSTS_INCLUDE_SUBDOMAINS", "False")
+    SECURE_HSTS_PRELOAD = _env_bool("DJANGO_HSTS_PRELOAD", "False")
 
 # --- Apps --------------------------------------------------------------
 INSTALLED_APPS = [
