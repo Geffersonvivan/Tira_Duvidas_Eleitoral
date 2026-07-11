@@ -158,3 +158,23 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 _UPLOAD_MAX = 20 * 1024 * 1024  # 20 MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = _UPLOAD_MAX
 FILE_UPLOAD_MAX_MEMORY_SIZE = _UPLOAD_MAX
+
+# --- Logging -----------------------------------------------------------
+# Com DEBUG=False o Django, por padrão, não emite o traceback dos 500 em
+# lugar nenhum (só e-mail para ADMINS). Sem isto, erros de produção ficam
+# invisíveis. Enviamos tudo para stderr → capturado pelo gunicorn/Railway.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "padrao": {"format": "[{asctime}] {levelname} {name}: {message}", "style": "{"},
+    },
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "padrao"},
+    },
+    "root": {"handlers": ["console"], "level": "INFO"},
+    "loggers": {
+        # Traceback completo dos 500 (inclui a exceção não tratada da view).
+        "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False},
+    },
+}
