@@ -18,11 +18,14 @@
 <main>
   <!-- ===== Serviço 1 ===== -->
   <section class="panel" data-panel="perguntas">
+    <h2 class="greeting">Como posso ajudar você hoje?</h2>
     <div class="card">
       <div class="chat" id="chat"></div>
       <div class="composer">
         <textarea id="q" placeholder="Escreva sua dúvida sobre direito, contabilidade ou impulsionamento eleitoral..."></textarea>
-        <button class="send" id="btn-perguntar">Perguntar</button>
+        <div class="composer-row">
+          <button class="send" id="btn-perguntar">Perguntar</button>
+        </div>
       </div>
       <div class="suggests">
         <button class="chip" data-fill="Posso impulsionar publicações do meu candidato no Instagram?">Impulsionamento no Instagram</button>
@@ -48,5 +51,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{% static 'js/app.js' %}?v=14"></script>
+<script src="{% static 'js/app.js' %}?v=18"></script>
 {% endblock %}

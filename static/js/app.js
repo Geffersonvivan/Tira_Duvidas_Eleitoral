@@ -26,6 +26,14 @@ document.querySelectorAll(".tab").forEach((tab) => {
     document.querySelectorAll(".panel").forEach((p) => {
       p.hidden = p.dataset.panel !== alvo;
     });
+    // O estado "chat-ativo" trava a página (altura fixa + rolagem interna) e
+    // só faz sentido na aba de perguntas com conversa. Ao trocar de serviço,
+    // remove a trava para que cada aba se comporte de forma isolada.
+    const chatEl = document.getElementById("chat");
+    document.body.classList.toggle(
+      "chat-ativo",
+      alvo === "perguntas" && chatEl.childElementCount > 0
+    );
   });
 });
 
@@ -39,10 +47,28 @@ function rolar() {
   chat.scrollTop = chat.scrollHeight;
 }
 
+// Composer estilo claude.ai: a caixa cresce com o conteúdo até um limite e
+// então rola por dentro; o botão fica apagado enquanto não há texto.
+const ALTURA_MAX = 200;
+function ajustarAltura() {
+  q.style.height = "auto";
+  q.style.height = Math.min(q.scrollHeight, ALTURA_MAX) + "px";
+}
+function sincronizarBotao() {
+  btn.disabled = !q.value.trim();
+}
+q.addEventListener("input", () => {
+  ajustarAltura();
+  sincronizarBotao();
+});
+sincronizarBotao(); // estado inicial: desabilitado quando vazio
+
 document.querySelectorAll(".chip[data-fill]").forEach((c) =>
   c.addEventListener("click", () => {
     q.value = c.dataset.fill;
     q.focus();
+    ajustarAltura();
+    sincronizarBotao();
   })
 );
 
@@ -94,6 +120,7 @@ async function perguntar() {
   document.body.classList.add("chat-ativo"); // muda para o estado de conversa
   bolhaUsuario(texto);
   q.value = "";
+  ajustarAltura(); // volta a caixa à altura inicial
   btn.disabled = true;
   rolar();
   const carregando = document.createElement("div");
@@ -118,7 +145,7 @@ async function perguntar() {
     carregando.remove();
     chat.insertAdjacentHTML("beforeend", `<div class="disclaimer">Falha de conexão.</div>`);
   } finally {
-    btn.disabled = false;
+    sincronizarBotao(); // reativa só se houver texto novo
     rolar();
   }
 }
