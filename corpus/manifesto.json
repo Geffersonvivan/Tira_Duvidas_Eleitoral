@@ -1,54 +1,6 @@
 [
   {
-    "titulo": "Código Eleitoral — Lei nº 4.737/1965",
-    "tipo": "norma",
-    "assunto": "direito",
-    "vigente": true,
-    "fonte_url": "https://www.planalto.gov.br/ccivil_03/leis/l4737compilado.htm",
-    "arquivo": "textos/codigo-eleitoral-4737.txt"
-  },
-  {
-    "titulo": "Lei das Eleições — Lei nº 9.504/1997 (normas gerais)",
-    "tipo": "norma",
-    "assunto": "direito",
-    "vigente": true,
-    "fonte_url": "https://www.planalto.gov.br/ccivil_03/leis/l9504.htm",
-    "arquivo": "textos/lei-9504-geral.txt"
-  },
-  {
-    "titulo": "Lei nº 9.504/1997 — Arrecadação e prestação de contas (arts. 17 a 32)",
-    "tipo": "norma",
-    "assunto": "contabilidade",
-    "vigente": true,
-    "fonte_url": "https://www.planalto.gov.br/ccivil_03/leis/l9504.htm",
-    "arquivo": "textos/lei-9504-contas-17-32.txt"
-  },
-  {
-    "titulo": "Lei dos Partidos Políticos — Lei nº 9.096/1995 (contabilidade partidária, arts. 30 a 32)",
-    "tipo": "norma",
-    "assunto": "contabilidade",
-    "vigente": true,
-    "fonte_url": "https://www.planalto.gov.br/ccivil_03/leis/l9096.htm",
-    "arquivo": "textos/lei-9096-contas-30-32.txt"
-  },
-  {
-    "titulo": "Resolução TSE nº 23.607/2019 — arrecadação, gastos e prestação de contas (norma-base)",
-    "tipo": "norma",
-    "assunto": "contabilidade",
-    "vigente": true,
-    "fonte_url": "https://www.tse.jus.br/legislacao/compilada/res/2019/resolucao-no-23-607-de-17-de-dezembro-de-2019",
-    "arquivo": "textos/res-tse-23607-2019.txt"
-  },
-  {
-    "titulo": "Resolução TSE nº 23.752/2026 — altera a Res. 23.607/2019 (Eleições 2026)",
-    "tipo": "norma",
-    "assunto": "contabilidade",
-    "vigente": true,
-    "fonte_url": "https://www.tse.jus.br/legislacao/compilada/res/2026/resolucao-no-23-752-de-26-de-fevereiro-de-2026",
-    "arquivo": "textos/res-tse-23752-2026.txt"
-  },
-  {
-    "titulo": "Lei nº 9.504/1997 — Propaganda na internet e impulsionamento (art. 57-A a 57-J, art. 26-XV)",
+    "titulo": "Lei nº 9.504/1997 — Propaganda na internet e impulsionamento (art. 26-XV, arts. 57-A a 57-J)",
     "tipo": "norma",
     "assunto": "impulsionamento",
     "vigente": true,
@@ -56,19 +8,11 @@
     "arquivo": "textos/lei-9504-propaganda-internet.txt"
   },
   {
-    "titulo": "Resolução TSE nº 23.610/2019 — propaganda eleitoral (norma-base; Art. 3-B impulsionamento)",
+    "titulo": "Resolução TSE nº 23.610/2019 — propaganda na internet, impulsionamento e IA (compilada; inclui Res. 23.755/2026)",
     "tipo": "norma",
     "assunto": "impulsionamento",
     "vigente": true,
     "fonte_url": "https://www.tse.jus.br/legislacao/compilada/res/2019/resolucao-no-23-610-de-18-de-dezembro-de-2019",
     "arquivo": "textos/res-tse-23610-2019.txt"
-  },
-  {
-    "titulo": "Resolução TSE nº 23.755/2026 — altera a Res. 23.610/2019 (uso de IA e conteúdo sintético)",
-    "tipo": "norma",
-    "assunto": "impulsionamento",
-    "vigente": true,
-    "fonte_url": "https://www.tse.jus.br/legislacao/compilada/res/2026/resolucao-no-23-755-de-2-de-marco-de-2026",
-    "arquivo": "textos/res-tse-23755-2026.txt"
   }
 ]

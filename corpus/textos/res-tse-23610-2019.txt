@@ -1,0 +1,78 @@
+RESOLUÇÃO Nº 23.610, DE 18 DE DEZEMBRO DE 2019 (Tribunal Superior Eleitoral)
+Dispõe sobre a propaganda eleitoral (Redação dada pela Resolução nº 23.732/2024).
+Texto compilado, com alterações das Resoluções nº 23.671/2021, 23.732/2024 e 23.755/2026.
+Fundamento: art. 23, IX, do Código Eleitoral e arts. 57-J e 105 da Lei nº 9.504/1997.
+Fonte oficial: https://www.tse.jus.br/legislacao/compilada/res/2019/resolucao-no-23-610-de-18-de-dezembro-de-2019
+
+Artigos selecionados sobre impulsionamento, propaganda na internet e inteligência artificial.
+
+=====================================================================
+MARCO TEMPORAL E PRÉ-CAMPANHA
+=====================================================================
+
+Art. 2º A propaganda eleitoral é permitida a partir de 16 de agosto do ano da eleição (Lei nº 9.504/1997, art. 36).
+
+Art. 3º-A. Considera-se propaganda antecipada passível de multa aquela divulgada extemporaneamente cuja mensagem contenha pedido explícito de voto, ou que veicule conteúdo eleitoral em local vedado ou por meio, forma ou instrumento proscrito no período de campanha. (Incluído pela Resolução nº 23.671/2021)
+Parágrafo único. O pedido explícito de voto não se limita ao uso da locução "vote em", podendo ser inferido de termos e expressões que transmitam o mesmo conteúdo. (Incluído pela Resolução nº 23.732/2024)
+
+Art. 3º-B. O impulsionamento pago de conteúdo político-eleitoral relacionado aos atos previstos no caput e nos incisos do art. 3º desta Resolução somente é permitido durante a pré-campanha quando cumpridos cumulativamente os seguintes requisitos: (Redação dada pela Resolução nº 23.732/2024)
+I - o serviço seja contratado por partido político, federação ou pela pessoa natural que pretenda se candidatar diretamente com o provedor de aplicação, com identificação inequívoca de que se trata de conteúdo impulsionado, devendo manter repositório público com dados sobre o impulsionamento; (Redação dada pela Resolução nº 23.755/2026)
+II - não haja pedido explícito de voto;
+III - os gastos sejam moderados, proporcionais e transparentes;
+IV - sejam observadas as regras aplicáveis ao impulsionamento durante a campanha.
+
+=====================================================================
+INTELIGÊNCIA ARTIFICIAL E CONTEÚDO SINTÉTICO
+=====================================================================
+
+Art. 9º-B A utilização na propaganda eleitoral, em qualquer modalidade, de conteúdo sintético multimídia gerado por meio de inteligência artificial ou tecnologia equivalente para criar, substituir, omitir, mesclar ou alterar a velocidade ou sobrepor imagens ou sons, impõe ao responsável pela propaganda o dever de informar, de modo explícito, destacado e acessível, que o conteúdo foi fabricado ou manipulado e qual tecnologia foi utilizada. (Redação dada pela Resolução nº 23.755/2026)
+
+§ 3º-A. Ficam vedadas a publicação e a republicação, ainda que gratuitas, bem como o impulsionamento pago de novos conteúdos sintéticos produzidos ou alterados por inteligência artificial ou por tecnologias equivalentes que utilizem imagem, voz ou manifestação de candidata ou candidato ou de pessoa pública, mesmo que rotulados e em conformidade com as demais exigências deste artigo, no período compreendido entre as 72 (setenta e duas) horas que antecedem e as 24 (vinte e quatro) horas que sucedem o término do pleito. (Incluído pela Resolução nº 23.755/2026)
+
+Art. 9º-C É vedada a utilização, na propaganda eleitoral, qualquer que seja sua forma ou modalidade, de conteúdo fabricado ou manipulado para difundir fatos notoriamente inverídicos ou descontextualizados com potencial para causar danos ao equilíbrio do pleito ou à integridade do processo eleitoral. (Incluído pela Resolução nº 23.732/2024)
+§ 1º É proibido o uso, para prejudicar ou para favorecer candidatura, de conteúdo sintético em formato de áudio, vídeo ou combinação de ambos, que tenha sido gerado ou manipulado digitalmente, ainda que mediante autorização, para criar, substituir ou alterar imagem ou voz de pessoa viva, falecida ou fictícia (deep fake). (Incluído pela Resolução nº 23.732/2024)
+§ 2º O descumprimento do previsto no caput e no § 1º deste artigo configura abuso do poder político e uso indevido dos meios de comunicação social, acarretando a cassação do registro ou do mandato.
+
+=====================================================================
+DA PROPAGANDA ELEITORAL NA INTERNET (Capítulo IV)
+=====================================================================
+
+Art. 27. É permitida a propaganda eleitoral na internet a partir do dia 16 de agosto do ano da eleição (Lei nº 9.504/1997, art. 57-A).
+
+Art. 27-A. O provedor de aplicação que preste serviço de impulsionamento de conteúdos político-eleitorais, inclusive sob a forma de priorização de resultado de busca, deverá: (Incluído pela Resolução nº 23.732/2024)
+I - manter repositório desses anúncios para acompanhamento, em tempo real, do conteúdo, dos valores, dos responsáveis pelo pagamento e das características dos grupos populacionais que compõem a audiência (perfilamento) da publicidade contratada;
+II - disponibilizar ferramenta de consulta, acessível e de fácil manejo, que permita realizar busca avançada nos dados do repositório.
+
+§ 1º Para os fins desse artigo, caracteriza conteúdo político-eleitoral, independente da classificação feita pela plataforma, aquele que versar sobre eleições, partidos políticos, federações e coligações, cargos eletivos, pessoas detentoras de cargos eletivos, pessoas candidatas, propostas de governo, projetos de lei, exercício do direito ao voto e de outros direitos políticos ou matérias relacionadas ao processo eleitoral.
+
+Art. 28. A propaganda eleitoral na internet poderá ser realizada nas seguintes formas (Lei nº 9.504/1997, art. 57-B, I a IV):
+I - em sítio da candidata ou do candidato, com endereço eletrônico comunicado à Justiça Eleitoral e hospedado, direta ou indiretamente, em provedor de aplicação de internet estabelecido no país;
+II - em sítio do partido político, da federação ou da coligação, com endereço eletrônico comunicado à Justiça Eleitoral e hospedado, direta ou indiretamente, em provedor de aplicação de internet estabelecido no país;
+III - por meio de mensagem eletrônica para endereços cadastrados gratuitamente pela candidata ou pelo candidato, pelo partido político, pela federação ou pela coligação desde que presente uma das hipóteses legais que autorizam o tratamento de dados pessoais, nos termos dos arts. 7º e 11 da Lei nº 13.709/2018;
+IV - por meio de blogs, redes sociais, sítios de mensagens instantâneas e aplicações de internet assemelhadas, dentre as quais aplicativos de mensagens instantâneas, cujo conteúdo seja gerado ou editado por:
+a) candidatas, candidatos, partidos políticos, federações ou coligações, desde que não contratem disparos em massa de conteúdo;
+b) pessoa natural, vedada:
+1. a contratação de impulsionamento e de disparo em massa de conteúdo;
+2. a remuneração, a monetização ou a concessão de outra vantagem econômica como retribuição à pessoa titular do canal ou perfil, paga pelas(os) beneficiárias(os) da propaganda ou por terceiros.
+
+§ 3º É vedada a utilização de impulsionamento de conteúdos e ferramentas digitais não disponibilizadas pelo provedor da aplicação de internet, ainda que gratuitas, para alterar o teor ou a repercussão de propaganda eleitoral, tanto próprios quanto de terceiros (Lei nº 9.504/1997, art. 57-B, § 3º).
+
+§ 7º Para os fins desta Resolução, inclui-se entre as formas de impulsionamento de conteúdo a priorização paga de conteúdos resultantes de aplicações de busca na internet (Lei nº 9.504/1997, art. 26, § 2º).
+
+§ 7º-A. O impulsionamento de conteúdo em provedor de aplicação de internet somente poderá ser utilizado para promover ou beneficiar candidatura, partido político ou federação que o contrate, sendo vedado o uso do impulsionamento para propaganda negativa. (Incluído pela Resolução nº 23.732/2024)
+
+Art. 29. É vedada a veiculação de qualquer tipo de propaganda eleitoral paga na internet, excetuado o impulsionamento de conteúdos, desde que identificado de forma inequívoca como tal e contratado exclusivamente por partidos políticos, federações, coligações, candidatas, candidatos e representantes (Lei nº 9.504/1997, art. 57-C, caput).
+
+§ 1º É vedada, ainda que gratuitamente, a veiculação de propaganda eleitoral na internet em sítios ou perfis em redes sociais (Lei nº 9.504/1997, art. 57-C, § 1º, I e II): (Redação dada pela Resolução nº 23.755/2026)
+I - de pessoas jurídicas, com ou sem fins lucrativos;
+II - oficiais ou hospedados por órgãos ou por entidades da administração pública direta ou indireta da União, dos Estados, do Distrito Federal e dos Municípios.
+
+§ 3º O impulsionamento de que trata o caput deste artigo deverá ser contratado diretamente com provedor da aplicação de internet com sede e foro no país, ou de sua filial, sucursal, escritório, estabelecimento ou representante legalmente estabelecida(o) no país e apenas com o fim de promover ou beneficiar candidatas e candidatos ou suas agremiações, vedada a realização de propaganda negativa (Lei nº 9.504/1997, art. 57-C, § 3º).
+
+§ 4º A(O) representante da candidata ou do candidato a que alude o caput deste artigo se restringe à pessoa do administrador financeiro da respectiva campanha.
+
+§ 5º Todo impulsionamento deverá conter, de forma clara e legível, o número de inscrição no Cadastro Nacional da Pessoa Jurídica (CNPJ) ou o número de inscrição no Cadastro de Pessoas Físicas (CPF) da pessoa responsável, além da expressão "Propaganda Eleitoral".
+
+§ 9º O provedor de aplicação que pretenda prestar o serviço de impulsionamento de propaganda conforme o § 3º deste artigo deverá se cadastrar na Justiça Eleitoral.
+
+§ 11. É vedada, desde 48 (quarenta e oito) horas antes até 24 (vinte e quatro) horas depois da eleição, a circulação paga ou impulsionada de propaganda eleitoral na internet, mesmo se a contratação tiver sido realizada antes desse prazo, cabendo ao provedor de aplicação, que comercializa o impulsionamento, realizar o desligamento da veiculação de propaganda eleitoral. (Incluído pela Resolução nº 23.732/2024)
