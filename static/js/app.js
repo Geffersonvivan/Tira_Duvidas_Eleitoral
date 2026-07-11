@@ -91,6 +91,7 @@ function bolhaResposta(data) {
 async function perguntar() {
   const texto = q.value.trim();
   if (!texto) return;
+  document.body.classList.add("chat-ativo"); // muda para o estado de conversa
   bolhaUsuario(texto);
   q.value = "";
   btn.disabled = true;

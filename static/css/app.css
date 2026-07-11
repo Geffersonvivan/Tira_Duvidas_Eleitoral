@@ -20,20 +20,22 @@ html,body{margin:0}
 body{
   font-family:'Inter',system-ui,sans-serif;
   background:var(--paper); color:var(--ink);
-  line-height:1.6; -webkit-font-smoothing:antialiased; min-height:100vh;
+  line-height:1.6; -webkit-font-smoothing:antialiased;
+  min-height:100vh; display:flex; flex-direction:column;
 }
+body > .wrap{flex:1 0 auto}   /* empurra o rodapé para a base (sticky footer) */
 .wrap{max-width:var(--wrap); margin:0 auto; padding:0 24px}
 a{color:var(--brand)}
 :focus-visible{outline:2px solid var(--brand); outline-offset:2px; border-radius:4px}
 
 /* ---------- Header ---------- */
 header.top{border-bottom:1px solid var(--line); background:rgba(236,238,232,.82); backdrop-filter:blur(10px); position:sticky; top:0; z-index:10}
-.top-inner{display:flex; align-items:center; justify-content:center; max-width:var(--wrap); margin:0 auto; padding:16px 24px}
-.brand{display:flex; align-items:center; gap:12px}
-.seal{width:38px; height:38px; border-radius:10px; flex:none; background:linear-gradient(150deg,var(--brand),var(--brand-ink)); display:grid; place-items:center; box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
-.seal svg{display:block; width:23px; height:23px}
-.brand h1{font-family:var(--serif); font-weight:600; font-size:18px; margin:0; letter-spacing:-.01em}
-.brand span{display:block; font-size:12px; color:var(--muted); font-weight:450}
+.top-inner{display:flex; align-items:center; justify-content:center; max-width:var(--wrap); margin:0 auto; padding:20px 24px}
+.brand{display:flex; align-items:center; gap:15px}
+.seal{width:48px; height:48px; border-radius:12px; flex:none; background:linear-gradient(150deg,var(--brand),var(--brand-ink)); display:grid; place-items:center; box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.seal svg{display:block; width:29px; height:29px}
+.brand h1{font-family:var(--serif); font-weight:600; font-size:22px; margin:0; letter-spacing:-.01em}
+.brand span{display:block; font-size:13.5px; color:var(--muted); font-weight:450; margin-top:1px}
 
 /* ---------- Hero ---------- */
 .hero{padding:52px 0 10px; text-align:center}
@@ -56,12 +58,31 @@ main{padding:22px 0 72px}
 .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow)}
 
 /* ---------- Chat (Serviço 1) ---------- */
-/* Chat estilo GPT/Claude: card de altura fixa, mensagens rolam por dentro,
-   composer preso no rodapé. */
-.panel[data-panel="perguntas"] .card{display:flex; flex-direction:column; height:calc(100dvh - 250px); min-height:440px; max-height:760px; overflow:hidden}
-.chat{padding:26px 28px; display:flex; flex-direction:column; gap:24px; flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain}
+/* Padrão de dois estados (GPT/Claude).
+   Estado vazio (1º acesso): card compacto, tudo acima da dobra. */
+.panel[data-panel="perguntas"] .card{display:flex; flex-direction:column}
+.chat{padding:26px 28px; display:flex; flex-direction:column; gap:24px}
+.chat:empty{display:none}   /* sem mensagens ainda: card só com o composer */
 .chat::-webkit-scrollbar{width:10px}
 .chat::-webkit-scrollbar-thumb{background:var(--line); border-radius:99px; border:3px solid var(--surface)}
+
+/* Estado ativo (conversa iniciada): card de altura fixa, mensagens rolam
+   por dentro, composer preso no rodapé; o hero encolhe para dar espaço. */
+/* Trava a página na altura da viewport: header e footer sempre visíveis,
+   só a lista de mensagens rola por dentro do card — nunca a página. */
+body.chat-ativo{height:100dvh; overflow:hidden; display:flex; flex-direction:column}
+body.chat-ativo > .wrap{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden}
+body.chat-ativo .hero{flex:none; padding:18px 0 0}
+body.chat-ativo .hero h2, body.chat-ativo .hero .lede{display:none}
+/* A conversa é uma "folha" que flutua com ar em volta: cresce com o conteúdo
+   até o limite da área e então rola por dentro — nunca encosta no rodapé. */
+body.chat-ativo main{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden; padding:24px 0 48px}
+body.chat-ativo .panel{flex:1 1 auto; min-height:0}
+body.chat-ativo .panel[data-panel="perguntas"]{display:flex; flex-direction:column}
+body.chat-ativo .panel[data-panel="perguntas"] .card{flex:0 1 auto; min-height:0; overflow:hidden}
+body.chat-ativo .panel[data-panel="material"]{overflow-y:auto}
+body.chat-ativo .chat{flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain}
+body.chat-ativo footer{flex:none}
 .msg{display:flex; gap:14px}
 .avatar{width:34px; height:34px; border-radius:10px; flex:none; display:grid; place-items:center; font-size:12px; font-weight:600}
 .avatar.user{background:var(--paper-2); color:var(--ink-soft); border:1px solid var(--line)}
