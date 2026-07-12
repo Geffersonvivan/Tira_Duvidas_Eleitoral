@@ -66,9 +66,14 @@ def classificar_intencao(pergunta: str) -> Classificacao:
     return Classificacao(on_topic=True, assunto=assunto.value)
 
 
-def recuperar_contexto(pergunta: str, assunto: str) -> Recuperacao:
-    """Recupera trechos do RAG (contexto + fontes citáveis)."""
-    vetor = embeddings.gerar_embedding(pergunta)
+def recuperar_contexto(pergunta: str, assunto: str, vetor: list | None = None) -> Recuperacao:
+    """Recupera trechos do RAG (contexto + fontes citáveis).
+
+    Aceita um `vetor` já calculado (reuso pelo orquestrador — evita embutir a
+    pergunta duas vezes); se ausente, calcula.
+    """
+    if vetor is None:
+        vetor = embeddings.gerar_embedding(pergunta)
     return buscar(vetor, assunto=assunto)
 
 
@@ -95,19 +100,30 @@ def responder_pergunta(
     classificar=None,
     recuperar=None,
     gerar=None,
+    registrar=None,
 ) -> RespostaPergunta:
     """Orquestra o Serviço 1. Dependências resolvidas em tempo de chamada
-    (permite injeção nos testes; em produção usa as etapas reais)."""
+    (permite injeção nos testes; em produção usa as etapas reais).
+
+    `registrar` captura a pergunta para o ranqueamento (analytics), reusando o
+    embedding já calculado. É best-effort e nunca deve quebrar a resposta."""
     classificar = classificar or classificar_intencao
     recuperar = recuperar or recuperar_contexto
     gerar = gerar or gerar_resposta
+    if registrar is None:
+        from analytics.services import capturar_seguro
+
+        registrar = capturar_seguro
 
     cls = classificar(pergunta)
     if not cls.on_topic:
+        registrar(pergunta, assunto=None, vetor=None, on_topic=False)
         return RespostaPergunta(on_topic=False, texto=RESPOSTA_OFF_TOPIC)
 
-    recuperacao = recuperar(pergunta, cls.assunto)
+    vetor = embeddings.gerar_embedding(pergunta)  # calculado uma vez, reusado abaixo
+    recuperacao = recuperar(pergunta, cls.assunto, vetor)
     texto = gerar(pergunta, recuperacao)
+    registrar(pergunta, assunto=cls.assunto, vetor=vetor, on_topic=True)
     return RespostaPergunta(
         on_topic=True,
         texto=texto,

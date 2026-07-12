@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "llm",
     "perguntas",
     "materiais",
+    "analytics",
 ]
 
 MIDDLEWARE = [
@@ -89,6 +90,11 @@ CLERK_SECRET_KEY = os.environ.get("CLERK_SECRET_KEY", "")
 CLERK_WEBHOOK_SECRET = os.environ.get("CLERK_WEBHOOK_SECRET", "")
 CLERK_ENABLED = bool(CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY)
 LOGIN_URL = "/"
+
+# --- Analytics de perguntas -------------------------------------------
+# Limiar de distância de cosseno para agrupar perguntas de sentido próximo
+# (0 = idêntico). ~0.12 corresponde a similaridade ~0.88. Calibrar com dados.
+ANALYTICS_LIMIAR_DISTANCIA = float(os.environ.get("ANALYTICS_LIMIAR_DISTANCIA", "0.12"))
 
 TEMPLATES = [
     {

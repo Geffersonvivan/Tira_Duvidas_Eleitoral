@@ -14,6 +14,7 @@ def test_off_topic_retorna_resposta_descontraida() -> None:
     resp = responder_pergunta(
         "Como faço bolo de cenoura?",
         classificar=lambda _p: Classificacao(on_topic=False),
+        registrar=lambda *a, **k: None,  # captura desligada no teste
     )
     assert resp.on_topic is False
     assert resp.texto == services.RESPOSTA_OFF_TOPIC
@@ -21,15 +22,17 @@ def test_off_topic_retorna_resposta_descontraida() -> None:
     assert resp.disclaimer == ""  # off-topic não leva disclaimer jurídico
 
 
-def test_on_topic_monta_resposta_com_fontes() -> None:
+def test_on_topic_monta_resposta_com_fontes(monkeypatch) -> None:
+    monkeypatch.setattr(services.embeddings, "gerar_embedding", lambda *a, **k: [0.0])
     norma = Documento(titulo="Lei 9.504/97", tipo=TipoFonte.NORMA, assunto=Assunto.IMPULSIONAMENTO)
     rec = Recuperacao(contexto=[], fontes_citaveis=[norma])
 
     resp = responder_pergunta(
         "Posso impulsionar publicação?",
         classificar=lambda _p: Classificacao(on_topic=True, assunto="impulsionamento"),
-        recuperar=lambda _p, _a: rec,
+        recuperar=lambda _p, _a, _v=None: rec,
         gerar=lambda _p, _r: "Sim, com identificação e registro.",
+        registrar=lambda *a, **k: None,
     )
     assert resp.on_topic is True
     assert resp.assunto == "impulsionamento"
