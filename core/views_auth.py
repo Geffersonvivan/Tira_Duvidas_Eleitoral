@@ -10,12 +10,8 @@ def _clerk_ctx() -> dict:
 
 
 def landing_view(request):
-    """Landing pública. Clerk desligado → serve a ferramenta (site público)."""
-    if not settings.CLERK_ENABLED:
-        from core.views import home
-
-        return home(request)
-    if request.user.is_authenticated:
+    """Landing pública em `/`. Com Clerk ligado, usuário já logado vai ao app."""
+    if settings.CLERK_ENABLED and request.user.is_authenticated:
         return redirect("app")
     return render(request, "landing.html", _clerk_ctx())
 

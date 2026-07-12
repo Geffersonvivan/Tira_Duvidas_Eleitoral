@@ -165,14 +165,19 @@
   import { ptBR } from 'https://cdn.jsdelivr.net/npm/@clerk/localizations/dist/pt-BR.mjs';
   const AUTH_SYNC = '/auth-sync/';
 
+  // Sem Clerk configurado, os CTAs levam direto à ferramenta (/app/).
   window.tdeLogin = function () {
     if (window.Clerk?.openSignIn) {
       window.Clerk.openSignIn({ forceRedirectUrl: AUTH_SYNC, signUpForceRedirectUrl: AUTH_SYNC });
+    } else {
+      location.href = '/app/';
     }
   };
   window.tdeSignUp = function () {
     if (window.Clerk?.openSignUp) {
       window.Clerk.openSignUp({ forceRedirectUrl: AUTH_SYNC, signInForceRedirectUrl: AUTH_SYNC });
+    } else {
+      location.href = '/app/';
     }
   };
   async function goToApp() {
