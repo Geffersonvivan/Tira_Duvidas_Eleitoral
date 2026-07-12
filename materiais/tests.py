@@ -63,6 +63,24 @@ def test_analisar_peca_off_topic() -> None:
     assert r.parecer is None
 
 
+def test_analisar_peca_imagem_ilegivel_degrada() -> None:
+    # Claude recusa a imagem (400) → degrada com mensagem amigável, sem propagar.
+    import httpx
+    from anthropic import BadRequestError
+
+    def gate_recusa(_d, _m):
+        raise BadRequestError(
+            "Could not process image",
+            response=httpx.Response(400, request=httpx.Request("POST", "http://x")),
+            body=None,
+        )
+
+    r = analisar_peca("ruim.png", b"x", "image/png", gate=gate_recusa)
+    assert r.on_topic is False
+    assert r.mensagem == services.RESPOSTA_IMAGEM_INVALIDA
+    assert r.parecer is None
+
+
 def test_analisar_peca_on_topic_com_seams() -> None:
     norma = Documento(titulo="Lei 9.504/97", tipo=TipoFonte.NORMA, assunto=Assunto.DIREITO)
     rec = Recuperacao(contexto=[], fontes_citaveis=[norma])

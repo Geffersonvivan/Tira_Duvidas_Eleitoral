@@ -10,6 +10,8 @@ import json
 from dataclasses import dataclass, field
 from enum import StrEnum
 
+from anthropic import BadRequestError
+
 from llm import budget, client
 from llm.config import Tarefa
 from llm.router import escolher_modelo
@@ -29,6 +31,11 @@ RESPOSTA_OFF_TOPIC = (
     "Essa peça não parece material de campanha eleitoral brasileira. 🗳️ "
     "Eu analiso santinhos e peças gráficas eleitorais quanto à legislação. "
     "Envie um material de campanha que eu confiro!"
+)
+
+RESPOSTA_IMAGEM_INVALIDA = (
+    "Não consegui abrir essa imagem. 🖼️ Ela pode estar corrompida, muito pequena "
+    "ou num formato que o leitor não processa. Reenvie um JPG, PNG ou PDF nítido da peça."
 )
 
 DISCLAIMER = (
@@ -196,13 +203,18 @@ def analisar_peca(
     recuperar = recuperar or recuperar_regras
     avaliar = avaliar or avaliar_conformidade
 
-    if not gate(dados, mtype):
-        return ResultadoAnalise(peca=nome, on_topic=False, mensagem=RESPOSTA_OFF_TOPIC)
+    try:
+        if not gate(dados, mtype):
+            return ResultadoAnalise(peca=nome, on_topic=False, mensagem=RESPOSTA_OFF_TOPIC)
 
-    texto = extrair(dados, mtype)
-    recuperacao = recuperar(texto)
-    parecer = avaliar(texto, recuperacao)
-    return ResultadoAnalise(peca=nome, on_topic=True, parecer=parecer)
+        texto = extrair(dados, mtype)
+        recuperacao = recuperar(texto)
+        parecer = avaliar(texto, recuperacao)
+        return ResultadoAnalise(peca=nome, on_topic=True, parecer=parecer)
+    except BadRequestError:
+        # Claude recusou a imagem (ex.: minúscula/corrompida) → 400. Degrada esta
+        # peça com mensagem amigável em vez de derrubar a requisição inteira (500).
+        return ResultadoAnalise(peca=nome, on_topic=False, mensagem=RESPOSTA_IMAGEM_INVALIDA)
 
 
 def analisar_lote(pecas: list[tuple[str, bytes, str]], **seams) -> list[ResultadoAnalise]:
