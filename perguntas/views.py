@@ -4,12 +4,16 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from core.auth import autorizado
 from perguntas import services
 from perguntas.serializers import FonteSerializer, PerguntaInputSerializer
 
 
 @api_view(["POST"])
 def perguntar(request: Request) -> Response:
+    if not autorizado(request):
+        return Response({"detail": "Autenticação necessária."}, status=401)
+
     entrada = PerguntaInputSerializer(data=request.data)
     entrada.is_valid(raise_exception=True)
 

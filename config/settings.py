@@ -72,11 +72,23 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Clerk JWT — roda após o AuthenticationMiddleware. Inerte se Clerk desligado.
+    "core.middleware.ClerkAuthMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
+
+# --- Auth (Clerk) ------------------------------------------------------
+# Instância independente do TDE (usuários próprios, separados do PJARI).
+# Sem CLERK_PUBLISHABLE_KEY, o login fica DESLIGADO e o site segue público
+# (degradação segura — não quebra produção antes de configurar o Clerk).
+CLERK_PUBLISHABLE_KEY = os.environ.get("CLERK_PUBLISHABLE_KEY", "")
+CLERK_SECRET_KEY = os.environ.get("CLERK_SECRET_KEY", "")
+CLERK_WEBHOOK_SECRET = os.environ.get("CLERK_WEBHOOK_SECRET", "")
+CLERK_ENABLED = bool(CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY)
+LOGIN_URL = "/"
 
 TEMPLATES = [
     {

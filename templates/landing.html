@@ -1,0 +1,201 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tira-Dúvidas Eleitoral — Inteligência jurídica para a campanha de 2026</title>
+<meta name="description" content="Assistente jurídico eleitoral com IA: direito, contabilidade de campanha e impulsionamento, com base na legislação e jurisprudência vigentes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;450;500;600&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+<style>
+  :root{
+    --ink:#18211d; --ink-soft:#4a544e; --muted:#7b847e;
+    --paper:#eceee8; --paper-2:#f4f5f0; --surface:#ffffff; --line:#dde0d8;
+    --brand:#15594a; --brand-ink:#0d3b30; --brand-soft:#e4efe9; --accent:#a97e2c;
+    --serif:'Fraunces',Georgia,serif; --mono:'Spline Sans Mono',ui-monospace,monospace;
+    --wrap:1080px; --r:16px;
+    --shadow:0 1px 2px rgba(20,30,25,.04), 0 18px 44px -18px rgba(20,30,25,.18);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:var(--wrap);margin:0 auto;padding:0 24px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:15px;border-radius:12px;padding:13px 24px;cursor:pointer;border:0;transition:.16s;font-family:inherit}
+  .btn-primary{background:var(--brand);color:#fff;box-shadow:var(--shadow)}
+  .btn-primary:hover{background:var(--brand-ink)}
+  .btn-ghost{background:transparent;color:var(--brand);border:1px solid var(--brand)}
+  .btn-ghost:hover{background:var(--brand-soft)}
+
+  /* Header */
+  header.top{position:sticky;top:0;z-index:10;background:rgba(236,238,232,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .top-inner{display:flex;align-items:center;justify-content:space-between;max-width:var(--wrap);margin:0 auto;padding:16px 24px}
+  .brand{display:flex;align-items:center;gap:13px}
+  .seal{width:44px;height:44px;border-radius:12px;flex:none;background:linear-gradient(150deg,var(--brand),var(--brand-ink));display:grid;place-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+  .seal svg{width:26px;height:26px}
+  .brand h1{font-family:var(--serif);font-weight:600;font-size:19px;letter-spacing:-.01em}
+  .brand span{display:block;font-size:12.5px;color:var(--muted);font-weight:450}
+
+  /* Hero */
+  .hero{text-align:center;padding:84px 0 64px}
+  .kicker{display:inline-block;font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--brand);background:var(--brand-soft);border:1px solid #cfe0d8;border-radius:999px;padding:6px 14px;margin-bottom:22px}
+  .hero h2{font-family:var(--serif);font-weight:600;font-size:clamp(32px,5.2vw,52px);line-height:1.1;letter-spacing:-.02em;max-width:16ch;margin:0 auto;text-wrap:balance}
+  .hero p.lede{color:var(--ink-soft);font-size:18px;line-height:1.7;max-width:60ch;margin:22px auto 34px;text-wrap:balance}
+  .cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .facts{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;margin-top:44px;color:var(--muted);font-size:13.5px}
+  .facts b{color:var(--ink);font-weight:600}
+
+  /* Seções */
+  section.block{padding:56px 0;border-top:1px solid var(--line)}
+  .block h3{font-family:var(--serif);font-weight:600;font-size:30px;letter-spacing:-.015em;text-align:center;margin-bottom:8px}
+  .block .sub{text-align:center;color:var(--muted);margin-bottom:38px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px;box-shadow:var(--shadow)}
+  .card .tag{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.06em;padding:3px 9px;border-radius:6px;margin-bottom:12px}
+  .tag.on{background:var(--ok-bg,#e7f2ea);color:var(--brand)}
+  .tag.soon{background:var(--paper-2);color:var(--muted);border:1px solid var(--line)}
+  .card h4{font-family:var(--serif);font-weight:500;font-size:19px;margin-bottom:6px}
+  .card p{color:var(--ink-soft);font-size:14.5px}
+
+  /* Preço */
+  .price-card{max-width:520px;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:36px;box-shadow:var(--shadow);text-align:center}
+  .price-card .plan{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .price{font-family:var(--serif);font-weight:600;font-size:46px;margin:14px 0 2px}
+  .price small{font-size:16px;color:var(--muted);font-weight:400}
+  .price-card ul{list-style:none;text-align:left;margin:24px 0;display:grid;gap:12px}
+  .price-card li{display:flex;gap:10px;font-size:14.5px;color:var(--ink-soft)}
+  .price-card li svg{flex:none;margin-top:3px;color:var(--brand)}
+
+  footer{border-top:1px solid var(--line);padding:26px 0;color:var(--muted);font-size:12.5px}
+  footer .wrap{font-family:var(--mono);letter-spacing:.02em;text-align:center}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <div class="seal" aria-hidden="true">
+        <svg viewBox="0 0 32 32"><path d="M8 9.5 h16 a1.8 1.8 0 0 1 1.8 1.8 v6.4 a1.8 1.8 0 0 1 -1.8 1.8 h-8 l-4.5 3.2 v-3.2 h-3.5 a1.8 1.8 0 0 1 -1.8 -1.8 v-6.4 a1.8 1.8 0 0 1 1.8 -1.8 z" fill="none" stroke="#fff" stroke-width="1.9" stroke-linejoin="round"/><path d="M11.5 14.4 l2.4 2.4 L20 11.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <h1>Tira-Dúvidas Eleitoral</h1>
+        <span>Direito, contabilidade e impulsionamento eleitoral</span>
+      </div>
+    </div>
+    <button class="btn btn-ghost" id="btn-login" onclick="tdeLogin()">Área do cliente</button>
+  </div>
+</header>
+
+<main>
+  <section class="hero wrap">
+    <span class="kicker">Sistema RAG · Legislação verificada</span>
+    <h2>Inteligência jurídica para a campanha eleitoral de 2026</h2>
+    <p class="lede">Assistente que orienta direito eleitoral, contabilidade de campanha e impulsionamento pago — com base na legislação e na jurisprudência vigentes. Toda resposta cita a norma que a sustenta.</p>
+    <div class="cta-row">
+      <button class="btn btn-primary" id="btn-cta" onclick="tdeSignUp()">Acessar agora</button>
+      <a class="btn btn-ghost" href="#precos">Ver planos</a>
+    </div>
+    <div class="facts">
+      <span><b>Respostas fundamentadas</b> · citam a norma</span>
+      <span><b>Base atualizada</b> · Lei 9.504 + Res. TSE</span>
+      <span><b>24/7</b> · plantão eleitoral</span>
+    </div>
+  </section>
+
+  <section class="block" id="casos">
+    <div class="wrap">
+      <h3>Aplicações práticas</h3>
+      <p class="sub">Duas ferramentas no ar; outras a caminho para o ciclo de 2026.</p>
+      <div class="grid">
+        <div class="card">
+          <span class="tag on">Disponível</span>
+          <h4>Perguntas eleitorais</h4>
+          <p>Direito, contabilidade e impulsionamento respondidos com base no RAG, citando a norma e a jurisprudência aplicáveis.</p>
+        </div>
+        <div class="card">
+          <span class="tag on">Disponível</span>
+          <h4>Validador de santinho</h4>
+          <p>Upload da peça gráfica para auditar CNPJ de campanha, tiragem, dados obrigatórios e conformidade com a legislação.</p>
+        </div>
+        <div class="card">
+          <span class="tag soon">Em breve</span>
+          <h4>Prestação de contas</h4>
+          <p>Limites de gastos, doações de pessoas físicas, recursos próprios e Fundo Partidário (FEFC).</p>
+        </div>
+        <div class="card">
+          <span class="tag soon">Em breve</span>
+          <h4>Análise de elegibilidade</h4>
+          <p>Cruzamento com a Lei da Ficha Limpa para avaliar a viabilidade da candidatura.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="precos">
+    <div class="wrap">
+      <h3>Planos</h3>
+      <p class="sub">Acesso completo ao sistema, com base legal sempre atualizada.</p>
+      <div class="price-card">
+        <div class="plan">Plano Profissional</div>
+        <div class="price">R$ 1.530<small> / mês</small></div>
+        <div style="color:var(--muted);font-size:13px">Plano anual com 15% de desconto</div>
+        <ul>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Consultas ilimitadas ao sistema RAG e ao validador de peças</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Legislação e resoluções do TSE integradas e atualizadas</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Respostas fundamentadas, com mitigação de alucinações</li>
+        </ul>
+        <button class="btn btn-primary" style="width:100%" onclick="tdeSignUp()">Começar agora</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap">Tira-Dúvidas Eleitoral · TDE · respostas fundamentadas em norma e jurisprudência vigentes.</div></footer>
+
+<script>window.clerkPublishableKey = "{{ CLERK_PUBLISHABLE_KEY }}";</script>
+<script async crossorigin="anonymous"
+  data-clerk-publishable-key="{{ CLERK_PUBLISHABLE_KEY }}"
+  src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
+  type="text/javascript"></script>
+<script type="module">
+  import { ptBR } from 'https://cdn.jsdelivr.net/npm/@clerk/localizations/dist/pt-BR.mjs';
+  const AUTH_SYNC = '/auth-sync/';
+
+  window.tdeLogin = function () {
+    if (window.Clerk?.openSignIn) {
+      window.Clerk.openSignIn({ forceRedirectUrl: AUTH_SYNC, signUpForceRedirectUrl: AUTH_SYNC });
+    }
+  };
+  window.tdeSignUp = function () {
+    if (window.Clerk?.openSignUp) {
+      window.Clerk.openSignUp({ forceRedirectUrl: AUTH_SYNC, signInForceRedirectUrl: AUTH_SYNC });
+    }
+  };
+  async function goToApp() {
+    try {
+      const token = await window.Clerk.session.getToken();
+      if (token) {
+        const https = location.protocol === 'https:';
+        document.cookie = `__session=${token}; path=/; max-age=3600; SameSite=Lax;${https ? ' Secure' : ''}`;
+      }
+    } catch (e) {}
+    location.href = '/app/';
+  }
+
+  {% if CLERK_PUBLISHABLE_KEY %}
+  window.addEventListener('load', async function () {
+    if (!window.Clerk) return;
+    await window.Clerk.load({ localization: ptBR });
+    if (window.Clerk.user) {
+      document.querySelectorAll('#btn-login, #btn-cta').forEach(b => {
+        b.textContent = 'Acessar TDE';
+        b.onclick = (e) => { e.preventDefault(); goToApp(); };
+      });
+    }
+  });
+  {% endif %}
+</script>
+</body>
+</html>

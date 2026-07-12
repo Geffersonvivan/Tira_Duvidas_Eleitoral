@@ -22,6 +22,10 @@ dependencies = [
     "python-dotenv>=1.0",        # variáveis de ambiente
     "gunicorn>=23.0",            # servidor de produção
     "whitenoise>=6.7",           # servir estáticos em produção
+    "PyJWT>=2.13.0",             # valida o JWT do Clerk (auth)
+    "cryptography>=48.0.1",      # backend RSA do PyJWT
+    "svix>=1.0",                 # verifica assinatura dos webhooks do Clerk
+    "requests>=2.32",            # chamadas à API do Clerk (JWKS/JIT)
 ]
 
 [project.optional-dependencies]

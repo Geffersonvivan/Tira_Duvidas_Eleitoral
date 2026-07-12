@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saindo — TDE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;450;500&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,sans-serif;background:#eceee8;color:#18211d;
+       height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spinner{width:2.5rem;height:2.5rem;margin-bottom:1.1rem;animation:spin .8s linear infinite}
+  h2{font-family:'Fraunces',Georgia,serif;font-size:1.3rem;font-weight:600}
+  p{font-size:.9rem;color:#7b847e;margin-top:.4rem}
+</style>
+</head>
+<body>
+  <svg class="spinner" viewBox="0 0 24 24" fill="none">
+    <circle style="opacity:.2" cx="12" cy="12" r="10" stroke="#15594a" stroke-width="4"></circle>
+    <path style="opacity:.85" fill="#15594a" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+  </svg>
+  <h2>Saindo…</h2>
+  <p>Encerrando sua sessão.</p>
+
+  <script>window.clerkPublishableKey = "{{ CLERK_PUBLISHABLE_KEY }}";</script>
+  <script crossorigin="anonymous"
+    data-clerk-publishable-key="{{ CLERK_PUBLISHABLE_KEY }}"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
+    type="text/javascript"></script>
+  <script type="module">
+    import { ptBR } from 'https://cdn.jsdelivr.net/npm/@clerk/localizations/dist/pt-BR.mjs';
+    async function sair() {
+      let n = 0;
+      while (!window.Clerk && n < 50) { await new Promise(r => setTimeout(r, 100)); n++; }
+      if (window.Clerk) {
+        try { await window.Clerk.load({ localization: ptBR }); await window.Clerk.signOut(); }
+        catch (e) { console.error('Clerk signOut error:', e); }
+      }
+      document.cookie = '__session=; path=/; max-age=0';
+      location.href = '/';
+    }
+    sair();
+  </script>
+</body>
+</html>

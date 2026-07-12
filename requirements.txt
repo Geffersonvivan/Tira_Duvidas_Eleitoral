@@ -11,3 +11,11 @@ pypdf>=5.0
 python-dotenv>=1.0
 gunicorn>=23.0
 whitenoise>=6.7
+
+# --- Auth (Clerk) — mesmos pisos de segurança do PJARI (pip-audit) ---
+# PyJWT valida o JWT do Clerk em core/middleware.py; svix verifica a
+# assinatura dos webhooks (obrigatória, fail-closed).
+PyJWT>=2.13.0
+cryptography>=48.0.1
+svix>=1.0
+requests>=2.32

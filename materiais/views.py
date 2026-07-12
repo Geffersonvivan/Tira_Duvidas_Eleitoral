@@ -9,6 +9,7 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from core.auth import autorizado
 from materiais import services
 from materiais.serializers import AnaliseInputSerializer, FonteSerializer
 
@@ -34,6 +35,9 @@ def _serializar(resultado: services.ResultadoAnalise) -> dict:
 @api_view(["POST"])
 @parser_classes([MultiPartParser])
 def analisar(request: Request) -> Response:
+    if not autorizado(request):
+        return Response({"detail": "Autenticação necessária."}, status=401)
+
     entrada = AnaliseInputSerializer(data=request.data)
     entrada.is_valid(raise_exception=True)
 
