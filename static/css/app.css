@@ -169,6 +169,26 @@ body:not(.chat-ativo) .suggests{justify-content:center; padding:16px 4px 0}
 .spinner{display:flex; align-items:center; gap:9px; color:var(--muted); font-size:14px}
 .spinner::before{content:""; width:14px; height:14px; border:2px solid var(--line); border-top-color:var(--brand); border-radius:50%; animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* Loading do chat: pontinhos pulsantes + texto de etapa (estilo claude.ai) */
+.carregando{display:flex; align-items:center; gap:11px}
+.carregando .status{color:var(--muted); font-size:14.5px}
+.dots{display:inline-flex; gap:5px}
+.dots i{width:7px; height:7px; border-radius:50%; background:var(--brand); animation:pulseDot 1.2s infinite ease-in-out}
+.dots i:nth-child(2){animation-delay:.16s}
+.dots i:nth-child(3){animation-delay:.32s}
+@keyframes pulseDot{0%,80%,100%{opacity:.25; transform:translateY(0)} 40%{opacity:1; transform:translateY(-3px)}}
+
+/* Na conversa ativa, os chips de sugestão saem de cena (como no claude.ai) */
+body.chat-ativo .suggests{display:none}
+
+/* Serviço 2: após analisar, a dropzone vira uma barra compacta */
+.panel.com-parecer .drop{display:flex; align-items:center; justify-content:center; gap:10px; padding:14px 20px}
+.panel.com-parecer .drop svg{width:20px; height:20px}
+.panel.com-parecer .drop .big,
+.panel.com-parecer .drop small,
+.panel.com-parecer .drop .formats{display:none}
+.panel.com-parecer .drop::after{content:"Enviar outra peça"; color:var(--brand); font-weight:600; font-size:14px}
 footer{border-top:1px solid var(--line); padding:24px 0; color:var(--muted); font-size:12.5px}
 footer .wrap{font-family:var(--mono); letter-spacing:.02em; text-align:center}
 

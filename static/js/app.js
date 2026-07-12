@@ -114,6 +114,34 @@ function bolhaResposta(data) {
   rolar();
 }
 
+// Loading no formato de mensagem do bot: avatar + bolha com pontinhos e um
+// texto que avança pelas etapas do pipeline (a resposta leva ~20s).
+const ETAPAS_CARREGANDO = [
+  "Analisando a pergunta…",
+  "Consultando a legislação…",
+  "Redigindo a resposta…",
+];
+function mostrarCarregando() {
+  chat.insertAdjacentHTML(
+    "beforeend",
+    `<div class="msg" id="__loader"><div class="avatar bot">${MARCA_SVG}</div>
+       <div class="bubble"><div class="who">Tira-Dúvidas</div>
+         <div class="carregando"><span class="dots"><i></i><i></i><i></i></span>
+         <span class="status">${ETAPAS_CARREGANDO[0]}</span></div></div></div>`
+  );
+  const status = chat.querySelector("#__loader .status");
+  let i = 0;
+  const timer = setInterval(() => {
+    i = Math.min(i + 1, ETAPAS_CARREGANDO.length - 1);
+    if (status) status.textContent = ETAPAS_CARREGANDO[i];
+  }, 2600);
+  rolar();
+  return () => {
+    clearInterval(timer);
+    document.getElementById("__loader")?.remove();
+  };
+}
+
 async function perguntar() {
   const texto = q.value.trim();
   if (!texto) return;
@@ -123,11 +151,7 @@ async function perguntar() {
   ajustarAltura(); // volta a caixa à altura inicial
   btn.disabled = true;
   rolar();
-  const carregando = document.createElement("div");
-  carregando.className = "spinner";
-  carregando.textContent = "Consultando…";
-  chat.appendChild(carregando);
-  rolar();
+  const fecharCarregando = mostrarCarregando();
   try {
     const r = await fetch("/api/perguntas/perguntar/", {
       method: "POST",
@@ -135,14 +159,14 @@ async function perguntar() {
       body: JSON.stringify({ pergunta: texto }),
     });
     const data = await r.json();
-    carregando.remove();
+    fecharCarregando();
     if (!r.ok) {
       chat.insertAdjacentHTML("beforeend", `<div class="disclaimer">Erro ao consultar. Tente novamente.</div>`);
       return;
     }
     bolhaResposta(data);
   } catch (e) {
-    carregando.remove();
+    fecharCarregando();
     chat.insertAdjacentHTML("beforeend", `<div class="disclaimer">Falha de conexão.</div>`);
   } finally {
     sincronizarBotao(); // reativa só se houver texto novo
@@ -201,6 +225,8 @@ function pareceresHTML(res) {
 }
 
 async function analisar(files) {
+  // Ao enviar, a dropzone encolhe para uma barra compacta e o parecer vira foco.
+  document.querySelector('.panel[data-panel="material"]').classList.add("com-parecer");
   painel.innerHTML = `<div class="spinner">Analisando ${files.length} peça(s)…</div>`;
   const fd = new FormData();
   for (const f of files) fd.append("arquivos", f);
