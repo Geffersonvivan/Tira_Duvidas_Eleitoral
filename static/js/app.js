@@ -95,12 +95,19 @@ function fontesHTML(fontes) {
   return `<div class="sources"><h4>Fontes (norma e jurisprudência válidas)</h4>${linhas}</div>`;
 }
 
+// Renderiza o Markdown da resposta (negrito, títulos, listas). Fallback seguro
+// para texto escapado se o marked.js não tiver carregado.
+function renderMd(texto) {
+  if (window.marked) return window.marked.parse(texto || "");
+  return esc(texto).replace(/\n/g, "<br>");
+}
+
 function bolhaResposta(data) {
   let corpo;
   if (!data.on_topic) {
-    corpo = `<div class="offtopic">${esc(data.texto)}</div>`;
+    corpo = `<div class="offtopic markdown">${renderMd(data.texto)}</div>`;
   } else {
-    corpo = `<div class="body"><p>${esc(data.texto).replace(/\n/g, "<br>")}</p></div>
+    corpo = `<div class="body markdown">${renderMd(data.texto)}</div>
       ${fontesHTML(data.fontes)}
       ${data.disclaimer ? `<div class="disclaimer">${esc(data.disclaimer)}</div>` : ""}`;
   }

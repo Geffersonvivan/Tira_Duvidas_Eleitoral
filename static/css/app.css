@@ -121,6 +121,22 @@ body.chat-ativo footer{flex:none}
 .bubble .body p{margin:0 0 10px}
 .bubble .body p:last-child{margin-bottom:0}
 
+/* ---------- Markdown das respostas ---------- */
+.markdown > :first-child{margin-top:0}
+.markdown > :last-child{margin-bottom:0}
+.markdown p{margin:0 0 10px}
+.markdown h2{font-family:var(--serif); font-weight:600; font-size:18px; letter-spacing:-.01em; margin:15px 0 8px; color:var(--ink)}
+.markdown h3{font-family:var(--serif); font-weight:600; font-size:15.5px; margin:13px 0 6px; color:var(--ink)}
+.markdown h4{font-weight:600; font-size:14px; margin:11px 0 5px; color:var(--ink-soft)}
+.markdown strong{font-weight:600}
+.markdown ul,.markdown ol{margin:0 0 11px; padding-left:20px}
+.markdown li{margin:4px 0}
+.markdown li::marker{color:var(--brand)}
+.markdown a{color:var(--brand); text-decoration:underline}
+.markdown code{font-family:var(--mono); font-size:.88em; background:var(--paper-2); padding:1px 6px; border-radius:5px}
+.markdown hr{border:0; border-top:1px solid var(--line); margin:13px 0}
+.markdown blockquote{margin:0 0 10px; padding:2px 0 2px 13px; border-left:3px solid var(--brand-soft); color:var(--ink-soft)}
+
 /* ---------- Fontes: a assinatura (citação em mono) ---------- */
 .sources{margin-top:18px; padding-top:15px; border-top:1px solid var(--line)}
 .sources h4{font-family:var(--mono); font-weight:600; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:0 0 12px}
