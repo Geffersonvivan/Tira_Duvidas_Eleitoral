@@ -59,18 +59,30 @@ header.top{border-bottom:1px solid var(--line); background:rgba(236,238,232,.82)
 .conta-sair svg{width:17px; height:17px; color:var(--muted); transition:color .12s}
 .conta-sair:hover svg{color:var(--bad)}
 
-/* ---------- Sidebar de conversas (drawer) ---------- */
-.menu-toggle{position:absolute; left:24px; top:50%; transform:translateY(-50%); display:grid; place-items:center; width:38px; height:38px; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--ink-soft); cursor:pointer; transition:.15s}
-.menu-toggle:hover{border-color:var(--brand); color:var(--brand); background:var(--brand-soft)}
-.menu-toggle svg{width:19px; height:19px}
+/* ---------- Sidebar estilo Claude: trilho fixo + painel encaixado ---------- */
+/* O conteúdo é empurrado (não coberto): body ganha padding à esquerda que
+   acompanha a largura da sidebar. No mobile o painel vira overlay. */
+.app-auth{padding-left:56px; transition:padding-left .2s ease}
+body.app-auth.sidebar-aberta{padding-left:288px} /* desktop empurra; mobile sobrescreve abaixo */
 
-.sidebar{position:fixed; left:0; top:0; bottom:0; width:288px; z-index:40; background:var(--surface); border-right:1px solid var(--line); padding:18px 14px; display:flex; flex-direction:column; gap:12px; transform:translateX(-100%); transition:transform .22s ease; box-shadow:6px 0 26px -18px rgba(20,30,25,.35)}
-body.sidebar-aberta .sidebar{transform:none}
-.sidebar-nova{display:flex; align-items:center; justify-content:center; gap:9px; padding:11px 14px; border:1px solid var(--line); border-radius:12px; background:var(--paper-2); color:var(--ink); font-family:inherit; font-size:14.5px; font-weight:500; cursor:pointer; transition:.15s}
-.sidebar-nova:hover{border-color:var(--brand); background:var(--brand-soft); color:var(--brand)}
-.sidebar-nova svg{width:17px; height:17px}
-.sidebar-titulo{font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); padding:6px 8px 0}
-.sidebar-lista{flex:1 1 auto; overflow-y:auto; display:flex; flex-direction:column; gap:2px; margin:0 -6px; padding:0 2px}
+.sidebar{position:fixed; left:0; top:0; bottom:0; z-index:40; display:flex; align-items:stretch}
+/* Trilho: coluna de ícones sempre visível (no desktop). */
+.rail{width:56px; flex:none; background:var(--surface); border-right:1px solid var(--line); display:flex; flex-direction:column; align-items:center; gap:4px; padding:14px 0}
+.rail-btn{position:relative; width:40px; height:40px; flex:none; display:grid; place-items:center; border:0; border-radius:11px; background:transparent; color:var(--ink-soft); cursor:pointer; transition:background .13s, color .13s}
+.rail-btn:hover{background:var(--brand-soft); color:var(--brand)}
+.rail-btn.rail-ativo{background:var(--brand-soft); color:var(--brand-ink)}
+.rail-btn svg{width:20px; height:20px}
+.rail-sep{width:22px; height:1px; background:var(--line); margin:5px 0}
+/* Tooltip do trilho (aparece à direita, instantâneo). */
+.rail-btn::after{content:attr(data-tip); position:absolute; left:calc(100% + 12px); top:50%; transform:translateY(-50%); white-space:nowrap; background:var(--ink); color:#fff; font-size:12px; padding:5px 9px; border-radius:7px; opacity:0; pointer-events:none; transition:opacity .12s; z-index:70}
+.rail-btn:hover::after{opacity:1}
+body.sidebar-aberta .rail-btn::after{display:none} /* painel aberto: sem tooltips sobre a lista */
+
+/* Painel de conversas: some (largura 0) quando fechado; abre com transição. */
+.sidebar-panel{width:0; flex:none; overflow:hidden; background:var(--surface); border-right:1px solid var(--line); display:flex; flex-direction:column; gap:10px; transition:width .2s ease; box-shadow:6px 0 26px -20px rgba(20,30,25,.4)}
+body.sidebar-aberta .sidebar-panel{width:232px; padding:18px 14px}
+.sidebar-titulo{font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); padding:2px 8px 0; white-space:nowrap}
+.sidebar-lista{flex:1 1 auto; overflow-y:auto; overflow-x:hidden; display:flex; flex-direction:column; gap:2px; margin:0 -6px; padding:0 2px; min-width:204px}
 .conversa-item{display:flex; align-items:center; gap:6px; padding:9px 10px; border-radius:9px; cursor:pointer; color:var(--ink-soft); transition:background .12s, color .12s}
 .conversa-item:hover{background:var(--paper-2)}
 .conversa-item.ativa{background:var(--brand-soft); color:var(--brand-ink)}
@@ -82,8 +94,15 @@ body.sidebar-aberta .sidebar{transform:none}
 .conversa-tip{position:fixed; z-index:60; max-width:260px; padding:7px 10px; border-radius:8px; background:var(--ink); color:#fff; font-size:12.5px; line-height:1.35; box-shadow:0 6px 20px rgba(0,0,0,.18); pointer-events:none}
 .conversa-tip[hidden]{display:none}
 .sidebar-vazia{color:var(--muted); font-size:13px; padding:10px 8px}
-.sidebar-backdrop{position:fixed; inset:0; background:rgba(20,30,25,.25); z-index:39; opacity:0; visibility:hidden; transition:opacity .2s, visibility .2s}
-body.sidebar-aberta .sidebar-backdrop{opacity:1; visibility:visible}
+/* Backdrop só existe no mobile (desktop empurra o conteúdo, sem escurecer). */
+.sidebar-backdrop{position:fixed; inset:0; background:rgba(20,30,25,.28); z-index:39; opacity:0; visibility:hidden; transition:opacity .2s, visibility .2s}
+
+/* ---------- Mobile: painel vira overlay (não empurra) + backdrop ---------- */
+@media (max-width:768px){
+  .app-auth{padding-left:56px}
+  body.app-auth.sidebar-aberta{padding-left:56px}
+  body.sidebar-aberta .sidebar-backdrop{opacity:1; visibility:visible}
+}
 .brand{display:flex; align-items:center; gap:15px}
 .seal{width:48px; height:48px; border-radius:12px; flex:none; background:linear-gradient(150deg,var(--brand),var(--brand-ink)); display:grid; place-items:center; box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
 .seal svg{display:block; width:29px; height:29px}

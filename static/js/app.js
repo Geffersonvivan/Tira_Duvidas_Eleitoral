@@ -26,6 +26,10 @@ document.querySelectorAll(".tab").forEach((tab) => {
     document.querySelectorAll(".panel").forEach((p) => {
       p.hidden = p.dataset.panel !== alvo;
     });
+    // Espelha a aba ativa no trilho da sidebar (mapa: material→material).
+    document.querySelectorAll(".rail-btn[data-tab-alvo]").forEach((b) =>
+      b.classList.toggle("rail-ativo", b.dataset.tabAlvo === alvo)
+    );
     // O estado "chat-ativo" trava a página (altura fixa + rolagem interna) e
     // só faz sentido na aba de perguntas com conversa. Ao trocar de serviço,
     // remove a trava para que cada aba se comporte de forma isolada.
@@ -69,8 +73,28 @@ const elSidebar = document.getElementById("sidebar");
 const elLista = document.getElementById("lista-conversas");
 const elMenu = document.getElementById("btn-menu");
 
+const MOD_KEY = /Mac|iPhone|iPad|iPod/.test(navigator.platform) ? "⌘" : "Ctrl";
+function aplicarSidebar(aberta, persist) {
+  document.body.classList.toggle("sidebar-aberta", aberta);
+  if (persist) {
+    try {
+      localStorage.setItem("tde-sidebar", aberta ? "1" : "0");
+    } catch (e) {}
+  }
+  if (elMenu) elMenu.dataset.tip = (aberta ? "Fechar" : "Abrir") + ` barra lateral · ${MOD_KEY}.`;
+}
 function fecharSidebar() {
-  document.body.classList.remove("sidebar-aberta");
+  aplicarSidebar(false, true);
+}
+function abrirSidebar() {
+  aplicarSidebar(true, true);
+}
+function alternarSidebar() {
+  aplicarSidebar(!document.body.classList.contains("sidebar-aberta"), true);
+}
+// Fecha só no mobile (onde o painel é overlay); no desktop mantém encaixado.
+function fecharSeMobile() {
+  if (window.matchMedia("(max-width:768px)").matches) aplicarSidebar(false, false);
 }
 function marcarAtiva(id) {
   document.querySelectorAll(".conversa-item").forEach((el) =>
@@ -151,7 +175,7 @@ async function abrirConversa(id) {
         });
     });
     marcarAtiva(id);
-    fecharSidebar();
+    fecharSeMobile();
     rolar();
   } catch (e) {}
 }
@@ -163,7 +187,7 @@ function novaConversa() {
   q.value = "";
   ajustarAltura();
   sincronizarBotao();
-  fecharSidebar();
+  fecharSeMobile();
   q.focus();
 }
 async function deletarConversa(id, el) {
@@ -180,11 +204,29 @@ async function deletarConversa(id, el) {
   } catch (e) {}
 }
 if (elMenu && elSidebar) {
-  elMenu.addEventListener("click", () => document.body.classList.toggle("sidebar-aberta"));
+  // Estado inicial: lembra a preferência (padrão = fechado/trilho).
+  aplicarSidebar(localStorage.getItem("tde-sidebar") === "1", false);
+
+  elMenu.addEventListener("click", alternarSidebar);
   document.getElementById("sidebar-backdrop").addEventListener("click", fecharSidebar);
   document.getElementById("btn-nova-conversa").addEventListener("click", novaConversa);
+  // Ícone "Conversas" no trilho: abre o painel da lista.
+  document
+    .querySelector('.rail-btn[data-rail="conversas"]')
+    ?.addEventListener("click", abrirSidebar);
+  // Ícones de serviço no trilho: disparam a troca de aba correspondente.
+  document.querySelectorAll(".rail-btn[data-tab-alvo]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const tab = document.querySelector(`.tab[data-tab="${b.dataset.tabAlvo}"]`);
+      if (tab) tab.click();
+    })
+  );
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") fecharSidebar();
+    if ((e.metaKey || e.ctrlKey) && e.key === ".") {
+      e.preventDefault();
+      alternarSidebar();
+    }
   });
   carregarConversas();
 }
