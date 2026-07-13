@@ -17,7 +17,9 @@ def _fake_post(captura: dict):
             {"embedding": [0.2, 0.2], "index": 1},
             {"embedding": [0.1, 0.1], "index": 0},
         ]
-        return SimpleNamespace(raise_for_status=lambda: None, json=lambda: {"data": data})
+        return SimpleNamespace(
+            status_code=200, headers={}, raise_for_status=lambda: None, json=lambda: {"data": data}
+        )
 
     return post
 
