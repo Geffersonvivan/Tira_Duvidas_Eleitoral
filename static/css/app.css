@@ -33,7 +33,9 @@ a{color:var(--brand)}
 
 /* ---------- Header ---------- */
 header.top{border-bottom:1px solid var(--line); background:rgba(236,238,232,.82); backdrop-filter:blur(10px); position:sticky; top:0; z-index:10}
-.top-inner{position:relative; display:flex; align-items:center; justify-content:center; max-width:var(--wrap); margin:0 auto; padding:20px 24px}
+/* .top-inner sem position:relative de propósito: o .conta se ancora no
+   header.top (sticky = largura total), indo ao canto direito real da viewport. */
+.top-inner{display:flex; align-items:center; justify-content:center; max-width:var(--wrap); margin:0 auto; padding:20px 24px}
 /* ---------- Conta (menu do usuário) ---------- */
 .conta{position:absolute; right:24px; top:50%; transform:translateY(-50%)}
 .conta-trigger{display:flex; align-items:center; gap:9px; padding:4px 12px 4px 4px; border:1px solid var(--line); border-radius:999px; background:var(--surface); cursor:pointer; font-family:inherit; transition:border-color .15s, background .15s}
