@@ -82,7 +82,7 @@ function itemConversa(c, prepend) {
   div.className = "conversa-item" + (c.id === conversaAtual ? " ativa" : "");
   div.dataset.id = c.id;
   div.innerHTML =
-    `<span class="ct">${esc(c.titulo)}</span>` +
+    `<span class="ct" data-full="${esc(c.titulo)}">${esc(c.titulo)}</span>` +
     `<button class="del" title="Apagar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>`;
   div.querySelector(".ct").addEventListener("click", () => abrirConversa(c.id));
   div.querySelector(".del").addEventListener("click", (e) => {
@@ -99,6 +99,31 @@ function renderLista(items) {
   }
   elLista.innerHTML = "";
   items.forEach((c) => itemConversa(c, false));
+}
+// Tooltip instantâneo (position:fixed escapa do overflow da lista); só aparece
+// quando o título está de fato truncado. Delegação cobre itens criados depois.
+if (elLista) {
+  const tip = document.createElement("div");
+  tip.className = "conversa-tip";
+  tip.hidden = true;
+  document.body.appendChild(tip);
+  const mostrar = (ct) => {
+    if (ct.scrollWidth <= ct.clientWidth) return; // não truncado: sem tooltip
+    tip.textContent = ct.dataset.full || ct.textContent;
+    const r = ct.getBoundingClientRect();
+    tip.style.left = r.left + "px";
+    tip.style.top = r.bottom + 6 + "px";
+    tip.hidden = false;
+  };
+  const esconder = () => (tip.hidden = true);
+  elLista.addEventListener("mouseover", (e) => {
+    const ct = e.target.closest(".ct");
+    if (ct) mostrar(ct);
+  });
+  elLista.addEventListener("mouseout", (e) => {
+    if (e.target.closest(".ct")) esconder();
+  });
+  elLista.addEventListener("scroll", esconder, { passive: true });
 }
 async function carregarConversas() {
   try {

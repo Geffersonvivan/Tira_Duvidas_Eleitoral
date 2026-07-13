@@ -79,6 +79,8 @@ body.sidebar-aberta .sidebar{transform:none}
 .conversa-item:hover .del{opacity:1}
 .conversa-item .del:hover{background:var(--bad-bg); color:var(--bad)}
 .conversa-item .del svg{width:14px; height:14px}
+.conversa-tip{position:fixed; z-index:60; max-width:260px; padding:7px 10px; border-radius:8px; background:var(--ink); color:#fff; font-size:12.5px; line-height:1.35; box-shadow:0 6px 20px rgba(0,0,0,.18); pointer-events:none}
+.conversa-tip[hidden]{display:none}
 .sidebar-vazia{color:var(--muted); font-size:13px; padding:10px 8px}
 .sidebar-backdrop{position:fixed; inset:0; background:rgba(20,30,25,.25); z-index:39; opacity:0; visibility:hidden; transition:opacity .2s, visibility .2s}
 body.sidebar-aberta .sidebar-backdrop{opacity:1; visibility:visible}
