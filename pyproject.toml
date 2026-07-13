@@ -43,7 +43,7 @@ dev = [
 [tool.ruff]
 target-version = "py312"
 line-length = 100
-extend-exclude = ["migrations"]
+extend-exclude = ["migrations", "corpus"]
 
 [tool.ruff.lint]
 select = [

@@ -22,5 +22,21 @@
     "vigente": true,
     "fonte_url": "https://www.planalto.gov.br/ccivil_03/leis/l9504.htm",
     "arquivo": "textos/lei-9504-propaganda-impressa.txt"
+  },
+  {
+    "titulo": "Lei nº 9.504/1997 — Arrecadação, gastos de campanha e prestação de contas (arts. 17 a 32)",
+    "tipo": "norma",
+    "assunto": "contabilidade",
+    "vigente": true,
+    "fonte_url": "https://www.planalto.gov.br/ccivil_03/leis/l9504.htm",
+    "arquivo": "textos/lei-9504-contabilidade.txt"
+  },
+  {
+    "titulo": "Lei Complementar nº 64/1990 (Lei da Ficha Limpa, com a LC 135/2010) — Casos de inelegibilidade (art. 1º e seguintes)",
+    "tipo": "norma",
+    "assunto": "direito",
+    "vigente": true,
+    "fonte_url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp64.htm",
+    "arquivo": "textos/lc64-ficha-limpa.txt"
   }
 ]
