@@ -16,4 +16,6 @@ def home(request: HttpRequest) -> HttpResponse:
     """Ferramenta (Serviços 1 e 2). Servida em /app/; exige login com Clerk ligado."""
     if settings.CLERK_ENABLED and not request.user.is_authenticated:
         return redirect("landing")
-    return render(request, "index.html")
+    # A publishable key permite carregar o Clerk.js na página e manter o cookie
+    # __session renovado (o token de sessão do Clerk é curto).
+    return render(request, "index.html", {"CLERK_PUBLISHABLE_KEY": settings.CLERK_PUBLISHABLE_KEY})
