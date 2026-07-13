@@ -43,8 +43,10 @@ def buscar(
 ) -> Recuperacao:
     """Busca semântica top-k por distância de cosseno (requer Postgres/pgvector).
 
-    Etapa 1 da recuperação iterativa. A reformulação/re-consulta em caso de baixa
-    cobertura é orquestrada na camada de serviço (a implementar no wiring da LLM).
+    O `assunto` é usado como filtro **preferencial**, não rígido: se filtrar por
+    ele não trouxer nada (ex.: classificação e tag não batem), refaz a busca em
+    todos os assuntos. Assim evita o "Ausência de Contexto" quando a pergunta
+    cai num assunto diferente do que o documento relevante está marcado.
     """
     if connection.vendor != "postgresql":
         raise NotImplementedError(
@@ -53,8 +55,14 @@ def buscar(
 
     from pgvector.django import CosineDistance  # import tardio: só no caminho Postgres
 
-    qs = Trecho.objects.select_related("documento").exclude(embedding=None)
+    base = Trecho.objects.select_related("documento").exclude(embedding=None)
+
+    def ordenar(qs):
+        return list(qs.order_by(CosineDistance("embedding", query_embedding))[:k])
+
+    trechos = []
     if assunto:
-        qs = qs.filter(documento__assunto=assunto)
-    trechos = list(qs.order_by(CosineDistance("embedding", query_embedding))[:k])
+        trechos = ordenar(base.filter(documento__assunto=assunto))
+    if not trechos:
+        trechos = ordenar(base)  # fallback: todos os assuntos
     return separar_por_citabilidade(trechos)
