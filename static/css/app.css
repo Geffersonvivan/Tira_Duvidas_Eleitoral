@@ -136,6 +136,9 @@ body.chat-ativo footer{flex:none}
 .markdown code{font-family:var(--mono); font-size:.88em; background:var(--paper-2); padding:1px 6px; border-radius:5px}
 .markdown hr{border:0; border-top:1px solid var(--line); margin:13px 0}
 .markdown blockquote{margin:0 0 10px; padding:2px 0 2px 13px; border-left:3px solid var(--brand-soft); color:var(--ink-soft)}
+/* cursor piscante enquanto a resposta se escreve (streaming) */
+.stream-body.escrevendo > :last-child::after{content:"▍"; display:inline-block; margin-left:1px; color:var(--brand); animation:caret 1.05s steps(1) infinite}
+@keyframes caret{50%{opacity:0}}
 
 /* ---------- Fontes: a assinatura (citação em mono) ---------- */
 .sources{margin-top:18px; padding-top:15px; border-top:1px solid var(--line)}

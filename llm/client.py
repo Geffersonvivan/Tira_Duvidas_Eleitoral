@@ -68,3 +68,33 @@ def completar(
         tokens_saida=resp.usage.output_tokens,
         stop_reason=resp.stop_reason,
     )
+
+
+def completar_stream(
+    modelo: str,
+    system: str,
+    mensagens: list[dict],
+    *,
+    max_tokens: int = 16000,
+    uso: dict | None = None,
+):
+    """Gera a resposta em streaming: yield dos deltas de texto conforme saem.
+
+    Ao término, se `uso` for passado, preenche os tokens/stop_reason para
+    contabilização (o gerador não pode retornar valor de forma prática)."""
+    kwargs: dict = {
+        "model": modelo,
+        "max_tokens": max_tokens,
+        "system": [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
+        "messages": mensagens,
+    }
+    if suporta_thinking(modelo):
+        kwargs["thinking"] = {"type": "adaptive"}
+
+    with _get_cliente().messages.stream(**kwargs) as stream:
+        yield from stream.text_stream
+        if uso is not None:
+            final = stream.get_final_message()
+            uso["entrada"] = final.usage.input_tokens
+            uso["saida"] = final.usage.output_tokens
+            uso["stop_reason"] = final.stop_reason

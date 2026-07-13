@@ -77,18 +77,23 @@ def recuperar_contexto(pergunta: str, assunto: str, vetor: list | None = None) -
     return buscar(vetor, assunto=assunto)
 
 
-def gerar_resposta(pergunta: str, recuperacao: Recuperacao) -> str:
-    """Redige a resposta ancorada no contexto recuperado (§4)."""
-    modelo = escolher_modelo(Tarefa.RESPONDER)
+def _system_resposta(recuperacao: Recuperacao) -> str:
+    """Prompt system ancorado no contexto recuperado (compartilhado stream/não)."""
     contexto = "\n\n".join(t.conteudo for t in recuperacao.contexto)
-    system = (
+    return (
         "Você é um assistente jurídico eleitoral brasileiro. Responda SOMENTE com "
         "base no CONTEXTO fornecido. Nunca invente artigo, resolução ou prazo. "
         "Cite apenas norma e jurisprudência válidas; jamais cite doutrina, curso ou "
         "material de apoio. Se o contexto não cobrir o ponto, admita a incerteza.\n\n"
         f"CONTEXTO:\n{contexto}"
     )
-    resp = client.completar(modelo, system, [{"role": "user", "content": pergunta}])
+
+
+def gerar_resposta(pergunta: str, recuperacao: Recuperacao) -> str:
+    """Redige a resposta ancorada no contexto recuperado (§4)."""
+    modelo = escolher_modelo(Tarefa.RESPONDER)
+    mensagens = [{"role": "user", "content": pergunta}]
+    resp = client.completar(modelo, _system_resposta(recuperacao), mensagens)
     budget.registrar_uso(modelo, Tarefa.RESPONDER, resp.tokens_entrada, resp.tokens_saida)
     return resp.texto
 
@@ -131,3 +136,35 @@ def responder_pergunta(
         disclaimer=DISCLAIMER,
         fontes=recuperacao.fontes_citaveis,
     )
+
+
+def responder_pergunta_stream(pergunta: str):
+    """Versão em streaming: gera eventos conforme a resposta é escrita.
+
+    Eventos (dicts): {tipo: "meta"|"delta"|"fim"}. `fim` traz as fontes (objetos
+    Documento) e o disclaimer — a view serializa as fontes para JSON."""
+    from analytics.services import capturar_seguro
+
+    cls = classificar_intencao(pergunta)
+    if not cls.on_topic:
+        yield {"tipo": "meta", "on_topic": False, "assunto": None}
+        yield {"tipo": "delta", "texto": RESPOSTA_OFF_TOPIC}
+        yield {"tipo": "fim", "fontes": [], "disclaimer": ""}
+        capturar_seguro(pergunta, assunto=None, vetor=None, on_topic=False)
+        return
+
+    vetor = embeddings.gerar_embedding(pergunta)
+    recuperacao = buscar(vetor, assunto=cls.assunto)
+    yield {"tipo": "meta", "on_topic": True, "assunto": cls.assunto}
+
+    modelo = escolher_modelo(Tarefa.RESPONDER)
+    uso: dict = {}
+    for delta in client.completar_stream(
+        modelo, _system_resposta(recuperacao), [{"role": "user", "content": pergunta}], uso=uso
+    ):
+        yield {"tipo": "delta", "texto": delta}
+    if uso:
+        budget.registrar_uso(modelo, Tarefa.RESPONDER, uso.get("entrada", 0), uso.get("saida", 0))
+
+    yield {"tipo": "fim", "fontes": recuperacao.fontes_citaveis, "disclaimer": DISCLAIMER}
+    capturar_seguro(pergunta, assunto=cls.assunto, vetor=vetor, on_topic=True)

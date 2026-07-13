@@ -149,6 +149,19 @@ function mostrarCarregando() {
   };
 }
 
+// Cria o balão vazio do bot (para o texto ir se escrevendo) e devolve o <div>
+// onde o Markdown é renderizado ao vivo.
+function criarBolhaBot(assunto, onTopic) {
+  const cls = onTopic ? "body markdown stream-body" : "offtopic markdown stream-body";
+  const who = "Tira-Dúvidas" + (assunto ? " · " + esc(assunto) : "");
+  chat.insertAdjacentHTML(
+    "beforeend",
+    `<div class="msg"><div class="avatar bot">${MARCA_SVG}</div><div class="bubble">
+       <div class="who">${who}</div><div class="${cls}"></div></div></div>`
+  );
+  return chat.lastElementChild.querySelector(".stream-body");
+}
+
 async function perguntar() {
   const texto = q.value.trim();
   if (!texto) return;
@@ -159,21 +172,83 @@ async function perguntar() {
   btn.disabled = true;
   rolar();
   const fecharCarregando = mostrarCarregando();
+
+  let assunto = null;
+  let onTopic = true;
+  let corpo = null; // .stream-body onde o texto se escreve
+  let buffer = "";
+  let pendente = false;
+  const desenhar = () => {
+    pendente = false;
+    if (corpo) {
+      corpo.innerHTML = renderMd(buffer);
+      rolar();
+    }
+  };
+  const agendar = () => {
+    if (!pendente) {
+      pendente = true;
+      requestAnimationFrame(desenhar);
+    }
+  };
+
   try {
-    const r = await fetch("/api/perguntas/perguntar/", {
+    const r = await fetch("/api/perguntas/stream/", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken() },
       body: JSON.stringify({ pergunta: texto }),
     });
-    const data = await r.json();
-    fecharCarregando();
-    if (!r.ok) {
+    if (!r.ok || !r.body) {
+      fecharCarregando();
       chat.insertAdjacentHTML("beforeend", `<div class="disclaimer">Erro ao consultar. Tente novamente.</div>`);
       return;
     }
-    bolhaResposta(data);
+    const reader = r.body.getReader();
+    const dec = new TextDecoder();
+    let resto = "";
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      resto += dec.decode(value, { stream: true });
+      let nl;
+      while ((nl = resto.indexOf("\n")) >= 0) {
+        const linha = resto.slice(0, nl).trim();
+        resto = resto.slice(nl + 1);
+        if (!linha) continue;
+        const ev = JSON.parse(linha);
+        if (ev.tipo === "meta") {
+          assunto = ev.assunto;
+          onTopic = ev.on_topic;
+        } else if (ev.tipo === "delta") {
+          if (!corpo) {
+            fecharCarregando();
+            corpo = criarBolhaBot(assunto, onTopic);
+            corpo.classList.add("escrevendo");
+          }
+          buffer += ev.texto;
+          agendar();
+        } else if (ev.tipo === "fim") {
+          desenhar(); // garante o texto final
+          if (corpo) {
+            corpo.classList.remove("escrevendo");
+            corpo.insertAdjacentHTML(
+              "afterend",
+              fontesHTML(ev.fontes) +
+                (ev.disclaimer ? `<div class="disclaimer">${esc(ev.disclaimer)}</div>` : "")
+            );
+          }
+          rolar();
+        } else if (ev.tipo === "erro") {
+          fecharCarregando();
+          if (corpo) corpo.classList.remove("escrevendo");
+          chat.insertAdjacentHTML("beforeend", `<div class="disclaimer">${esc(ev.texto)}</div>`);
+        }
+      }
+    }
+    fecharCarregando(); // caso nada tenha chegado
   } catch (e) {
     fecharCarregando();
+    if (corpo) corpo.classList.remove("escrevendo");
     chat.insertAdjacentHTML("beforeend", `<div class="disclaimer">Falha de conexão.</div>`);
   } finally {
     sincronizarBotao(); // reativa só se houver texto novo
