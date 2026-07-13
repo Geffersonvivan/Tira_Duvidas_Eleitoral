@@ -52,6 +52,9 @@ class Documento(models.Model):
     vigencia_fim = models.DateField(null=True, blank=True)
 
     fonte_url = models.URLField(blank=True)
+    #: sha256 do texto ingerido — permite ingestão incremental (pula re-embedding
+    #: quando o conteúdo não mudou, evitando estourar a cota de embeddings).
+    conteudo_hash = models.CharField(max_length=64, blank=True, default="")
     criado_em = models.DateTimeField(auto_now_add=True)
 
     objects = DocumentoQuerySet.as_manager()

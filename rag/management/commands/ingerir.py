@@ -8,6 +8,7 @@ com o texto inline (`texto`) ou apontando para um arquivo (`arquivo`, relativo
 ao manifesto). Re-executar atualiza o documento e re-indexa os trechos.
 """
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -18,10 +19,15 @@ from rag.models import TIPOS_CITAVEIS, Assunto, Documento, TipoFonte
 
 
 class Command(BaseCommand):
-    help = "Ingere documentos no RAG a partir de um manifesto JSON."
+    help = "Ingere documentos no RAG a partir de um manifesto JSON (incremental)."
 
     def add_arguments(self, parser) -> None:
         parser.add_argument("manifesto", help="Caminho para o JSON com a lista de documentos.")
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            help="Reembeda todos os docs, mesmo os inalterados (ignora o hash).",
+        )
 
     def handle(self, *args, **opts) -> None:
         caminho = Path(opts["manifesto"])
@@ -34,7 +40,8 @@ class Command(BaseCommand):
             raise CommandError(f"JSON inválido: {exc}") from exc
 
         base = caminho.parent
-        total_docs = total_trechos = 0
+        force = opts.get("force", False)
+        total_docs = total_trechos = pulados = 0
 
         for item in itens:
             titulo = item.get("titulo")
@@ -56,6 +63,16 @@ class Command(BaseCommand):
 
             # citável por padrão só para norma/jurisprudência (regra de citação).
             citavel = item.get("citavel", tipo in TIPOS_CITAVEIS)
+            conteudo_hash = hashlib.sha256(texto.encode("utf-8")).hexdigest()
+
+            # Incremental: se o texto não mudou e já há trechos, atualiza só os
+            # metadados e pula a re-embedding (não gasta cota da Voyage).
+            anterior = Documento.objects.filter(titulo=titulo).first()
+            inalterado = (
+                anterior is not None
+                and anterior.conteudo_hash == conteudo_hash
+                and anterior.trechos.exists()
+            )
             doc, _ = Documento.objects.update_or_create(
                 titulo=titulo,
                 defaults={
@@ -64,8 +81,14 @@ class Command(BaseCommand):
                     "citavel": citavel,
                     "vigente": item.get("vigente", True),
                     "fonte_url": item.get("fonte_url", ""),
+                    "conteudo_hash": conteudo_hash,
                 },
             )
+            if inalterado and not force:
+                pulados += 1
+                self.stdout.write(f"  = {doc.titulo} — sem mudança ({doc.trechos.count()} trechos)")
+                continue
+
             doc.trechos.all().delete()  # re-ingestão limpa
             trechos = ingest.ingerir(doc, texto)
 
@@ -74,6 +97,7 @@ class Command(BaseCommand):
             marca = "citável" if doc.pode_citar else "contexto"
             self.stdout.write(f"  ✓ {doc.titulo} [{marca}] — {len(trechos)} trechos")
 
-        self.stdout.write(
-            self.style.SUCCESS(f"Concluído: {total_docs} documentos, {total_trechos} trechos.")
-        )
+        resumo = f"Concluído: {total_docs} (re)ingeridos, {total_trechos} trechos"
+        if pulados:
+            resumo += f"; {pulados} sem mudança (pulados)"
+        self.stdout.write(self.style.SUCCESS(resumo + "."))
