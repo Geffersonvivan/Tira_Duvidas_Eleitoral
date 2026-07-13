@@ -63,6 +63,107 @@ q.addEventListener("input", () => {
 });
 sincronizarBotao(); // estado inicial: desabilitado quando vazio
 
+// ---------------------------------------------------- Conversas (histórico)
+let conversaAtual = null; // id da conversa aberta (null = nova)
+const elSidebar = document.getElementById("sidebar");
+const elLista = document.getElementById("lista-conversas");
+const elMenu = document.getElementById("btn-menu");
+
+function fecharSidebar() {
+  document.body.classList.remove("sidebar-aberta");
+}
+function marcarAtiva(id) {
+  document.querySelectorAll(".conversa-item").forEach((el) =>
+    el.classList.toggle("ativa", Number(el.dataset.id) === id)
+  );
+}
+function itemConversa(c, prepend) {
+  const div = document.createElement("div");
+  div.className = "conversa-item" + (c.id === conversaAtual ? " ativa" : "");
+  div.dataset.id = c.id;
+  div.innerHTML =
+    `<span class="ct">${esc(c.titulo)}</span>` +
+    `<button class="del" title="Apagar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>`;
+  div.querySelector(".ct").addEventListener("click", () => abrirConversa(c.id));
+  div.querySelector(".del").addEventListener("click", (e) => {
+    e.stopPropagation();
+    deletarConversa(c.id, div);
+  });
+  elLista.prepend ? (prepend ? elLista.prepend(div) : elLista.appendChild(div)) : elLista.appendChild(div);
+  return div;
+}
+function renderLista(items) {
+  if (!items.length) {
+    elLista.innerHTML = `<div class="sidebar-vazia">Nenhuma conversa ainda.</div>`;
+    return;
+  }
+  elLista.innerHTML = "";
+  items.forEach((c) => itemConversa(c, false));
+}
+async function carregarConversas() {
+  try {
+    const r = await fetch("/api/conversas/");
+    if (r.ok) renderLista(await r.json());
+  } catch (e) {}
+}
+async function abrirConversa(id) {
+  try {
+    const r = await fetch(`/api/conversas/${id}/`);
+    if (!r.ok) return;
+    const data = await r.json();
+    conversaAtual = data.id;
+    chat.innerHTML = "";
+    document.body.classList.add("chat-ativo");
+    data.mensagens.forEach((m) => {
+      if (m.papel === "user") bolhaUsuario(m.texto);
+      else
+        bolhaResposta({
+          on_topic: m.on_topic,
+          assunto: m.assunto,
+          texto: m.texto,
+          fontes: m.fontes,
+          disclaimer: m.disclaimer,
+        });
+    });
+    marcarAtiva(id);
+    fecharSidebar();
+    rolar();
+  } catch (e) {}
+}
+function novaConversa() {
+  conversaAtual = null;
+  chat.innerHTML = "";
+  document.body.classList.remove("chat-ativo");
+  marcarAtiva(null);
+  q.value = "";
+  ajustarAltura();
+  sincronizarBotao();
+  fecharSidebar();
+  q.focus();
+}
+async function deletarConversa(id, el) {
+  if (!confirm("Apagar esta conversa?")) return;
+  try {
+    const r = await fetch(`/api/conversas/${id}/`, {
+      method: "DELETE",
+      headers: { "X-CSRFToken": csrftoken() },
+    });
+    if (!r.ok) return;
+    el.remove();
+    if (id === conversaAtual) novaConversa();
+    if (!elLista.children.length) renderLista([]);
+  } catch (e) {}
+}
+if (elMenu && elSidebar) {
+  elMenu.addEventListener("click", () => document.body.classList.toggle("sidebar-aberta"));
+  document.getElementById("sidebar-backdrop").addEventListener("click", fecharSidebar);
+  document.getElementById("btn-nova-conversa").addEventListener("click", novaConversa);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") fecharSidebar();
+  });
+  carregarConversas();
+}
+
 document.querySelectorAll(".chip[data-fill]").forEach((c) =>
   c.addEventListener("click", () => {
     q.value = c.dataset.fill;
@@ -196,7 +297,7 @@ async function perguntar() {
     const r = await fetch("/api/perguntas/stream/", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken() },
-      body: JSON.stringify({ pergunta: texto }),
+      body: JSON.stringify({ pergunta: texto, conversa_id: conversaAtual }),
     });
     if (!r.ok || !r.body) {
       fecharCarregando();
@@ -216,7 +317,17 @@ async function perguntar() {
         resto = resto.slice(nl + 1);
         if (!linha) continue;
         const ev = JSON.parse(linha);
-        if (ev.tipo === "meta") {
+        if (ev.tipo === "conversa") {
+          conversaAtual = ev.id;
+          if (elLista) {
+            if (ev.nova) {
+              const vazia = elLista.querySelector(".sidebar-vazia");
+              if (vazia) vazia.remove();
+              itemConversa({ id: ev.id, titulo: ev.titulo }, true);
+            }
+            marcarAtiva(ev.id);
+          }
+        } else if (ev.tipo === "meta") {
           assunto = ev.assunto;
           onTopic = ev.on_topic;
         } else if (ev.tipo === "delta") {

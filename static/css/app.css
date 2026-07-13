@@ -58,6 +58,30 @@ header.top{border-bottom:1px solid var(--line); background:rgba(236,238,232,.82)
 .conta-sair:hover{background:var(--paper-2); color:var(--bad)}
 .conta-sair svg{width:17px; height:17px; color:var(--muted); transition:color .12s}
 .conta-sair:hover svg{color:var(--bad)}
+
+/* ---------- Sidebar de conversas (drawer) ---------- */
+.menu-toggle{position:absolute; left:24px; top:50%; transform:translateY(-50%); display:grid; place-items:center; width:38px; height:38px; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--ink-soft); cursor:pointer; transition:.15s}
+.menu-toggle:hover{border-color:var(--brand); color:var(--brand); background:var(--brand-soft)}
+.menu-toggle svg{width:19px; height:19px}
+
+.sidebar{position:fixed; left:0; top:0; bottom:0; width:288px; z-index:40; background:var(--surface); border-right:1px solid var(--line); padding:18px 14px; display:flex; flex-direction:column; gap:12px; transform:translateX(-100%); transition:transform .22s ease; box-shadow:6px 0 26px -18px rgba(20,30,25,.35)}
+body.sidebar-aberta .sidebar{transform:none}
+.sidebar-nova{display:flex; align-items:center; justify-content:center; gap:9px; padding:11px 14px; border:1px solid var(--line); border-radius:12px; background:var(--paper-2); color:var(--ink); font-family:inherit; font-size:14.5px; font-weight:500; cursor:pointer; transition:.15s}
+.sidebar-nova:hover{border-color:var(--brand); background:var(--brand-soft); color:var(--brand)}
+.sidebar-nova svg{width:17px; height:17px}
+.sidebar-titulo{font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); padding:6px 8px 0}
+.sidebar-lista{flex:1 1 auto; overflow-y:auto; display:flex; flex-direction:column; gap:2px; margin:0 -6px; padding:0 2px}
+.conversa-item{display:flex; align-items:center; gap:6px; padding:9px 10px; border-radius:9px; cursor:pointer; color:var(--ink-soft); transition:background .12s, color .12s}
+.conversa-item:hover{background:var(--paper-2)}
+.conversa-item.ativa{background:var(--brand-soft); color:var(--brand-ink)}
+.conversa-item .ct{flex:1; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.conversa-item .del{flex:none; width:24px; height:24px; border:0; background:transparent; color:var(--muted); border-radius:6px; cursor:pointer; opacity:0; display:grid; place-items:center; transition:.12s}
+.conversa-item:hover .del{opacity:1}
+.conversa-item .del:hover{background:var(--bad-bg); color:var(--bad)}
+.conversa-item .del svg{width:14px; height:14px}
+.sidebar-vazia{color:var(--muted); font-size:13px; padding:10px 8px}
+.sidebar-backdrop{position:fixed; inset:0; background:rgba(20,30,25,.25); z-index:39; opacity:0; visibility:hidden; transition:opacity .2s, visibility .2s}
+body.sidebar-aberta .sidebar-backdrop{opacity:1; visibility:visible}
 .brand{display:flex; align-items:center; gap:15px}
 .seal{width:48px; height:48px; border-radius:12px; flex:none; background:linear-gradient(150deg,var(--brand),var(--brand-ink)); display:grid; place-items:center; box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
 .seal svg{display:block; width:29px; height:29px}

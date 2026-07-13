@@ -46,18 +46,51 @@ def perguntar_stream(request):
     if not autorizado(request):
         return JsonResponse({"detail": "Autenticação necessária."}, status=401)
     try:
-        pergunta = (json.loads(request.body).get("pergunta") or "").strip()
+        corpo = json.loads(request.body)
+        pergunta = (corpo.get("pergunta") or "").strip()
+        conversa_id = corpo.get("conversa_id")
     except (json.JSONDecodeError, UnicodeDecodeError):
         return JsonResponse({"detail": "JSON inválido."}, status=400)
     if not pergunta:
         return JsonResponse({"pergunta": ["Campo obrigatório."]}, status=400)
 
+    # Histórico: só persiste com usuário autenticado (público não tem dono).
+    conversa = nova_conversa = None
+    if request.user.is_authenticated:
+        from conversas.models import Mensagem
+        from conversas.services import get_or_create_conversa, salvar_mensagem
+
+        conversa, nova_conversa = get_or_create_conversa(request.user, conversa_id, pergunta)
+        salvar_mensagem(conversa, Mensagem.Papel.USUARIO, pergunta)
+
     def eventos():
+        partes, meta = [], {"assunto": "", "on_topic": True, "disclaimer": "", "fontes": []}
+        if conversa is not None:
+            ini = {
+                "tipo": "conversa",
+                "id": conversa.id,
+                "titulo": conversa.titulo,
+                "nova": nova_conversa,
+            }
+            yield json.dumps(ini, ensure_ascii=False) + "\n"
         try:
             for ev in services.responder_pergunta_stream(pergunta):
-                if ev.get("tipo") == "fim":
+                if ev.get("tipo") == "meta":
+                    meta["assunto"] = ev.get("assunto") or ""
+                    meta["on_topic"] = ev.get("on_topic", True)
+                elif ev.get("tipo") == "delta":
+                    partes.append(ev["texto"])
+                elif ev.get("tipo") == "fim":
                     ev = {**ev, "fontes": FonteSerializer(ev["fontes"], many=True).data}
+                    meta["disclaimer"] = ev.get("disclaimer") or ""
+                    meta["fontes"] = ev["fontes"]
                 yield json.dumps(ev, ensure_ascii=False) + "\n"
+            # resposta completa: grava no histórico
+            if conversa is not None and partes:
+                from conversas.models import Mensagem
+                from conversas.services import salvar_mensagem
+
+                salvar_mensagem(conversa, Mensagem.Papel.ASSISTENTE, "".join(partes), **meta)
         except Exception:
             logger.exception("Erro no stream de perguntas")
             erro = {"tipo": "erro", "texto": "Erro ao consultar. Tente novamente."}

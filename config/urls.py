@@ -9,4 +9,5 @@ urlpatterns = [
     path("", include("core.urls")),
     path("api/perguntas/", include("perguntas.urls")),
     path("api/materiais/", include("materiais.urls")),
+    path("api/conversas/", include("conversas.urls")),
 ]
