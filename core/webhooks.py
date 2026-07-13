@@ -65,7 +65,10 @@ def clerk_webhook(request):
 
         from core.models import UserProfile
 
-        UserProfile.objects.update_or_create(user=user, defaults={"clerk_id": clerk_id})
+        avatar = data.get("image_url") or data.get("profile_image_url") or ""
+        UserProfile.objects.update_or_create(
+            user=user, defaults={"clerk_id": clerk_id, "avatar_url": avatar}
+        )
         logger.info("Clerk sync: %s %s (%s)", "created" if created else "updated", clerk_id, email)
 
     elif event_type == "user.deleted":

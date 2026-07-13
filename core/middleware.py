@@ -155,10 +155,13 @@ class ClerkAuthMiddleware:
                 user.set_unusable_password()
                 user.save()
 
-            # Sincroniza o clerk_id no perfil (criado pelo signal post_save).
+            # Sincroniza o clerk_id e a foto no perfil (criado pelo signal post_save).
             from core.models import UserProfile
 
-            UserProfile.objects.update_or_create(user=user, defaults={"clerk_id": clerk_user_id})
+            avatar = data.get("image_url") or data.get("profile_image_url") or ""
+            UserProfile.objects.update_or_create(
+                user=user, defaults={"clerk_id": clerk_user_id, "avatar_url": avatar}
+            )
             cache.set(sync_key, True, timeout=3600)
             return user
         except Exception as e:

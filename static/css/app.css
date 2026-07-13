@@ -34,8 +34,28 @@ a{color:var(--brand)}
 /* ---------- Header ---------- */
 header.top{border-bottom:1px solid var(--line); background:rgba(236,238,232,.82); backdrop-filter:blur(10px); position:sticky; top:0; z-index:10}
 .top-inner{position:relative; display:flex; align-items:center; justify-content:center; max-width:var(--wrap); margin:0 auto; padding:20px 24px}
-.top .sair{position:absolute; right:24px; top:50%; transform:translateY(-50%); font-family:var(--mono); font-size:12.5px; font-weight:600; color:var(--ink-soft); border:1px solid var(--line); border-radius:999px; padding:7px 15px; background:var(--surface); transition:.15s}
-.top .sair:hover{border-color:var(--brand); color:var(--brand); background:var(--brand-soft)}
+/* ---------- Conta (menu do usuário) ---------- */
+.conta{position:absolute; right:24px; top:50%; transform:translateY(-50%)}
+.conta-trigger{display:flex; align-items:center; gap:9px; padding:4px 12px 4px 4px; border:1px solid var(--line); border-radius:999px; background:var(--surface); cursor:pointer; font-family:inherit; transition:border-color .15s, background .15s}
+.conta-trigger:hover{border-color:var(--brand); background:var(--brand-soft)}
+.conta-foto{width:30px; height:30px; border-radius:50%; object-fit:cover; flex:none; box-shadow:0 0 0 2px var(--brand-soft)}
+.conta-iniciais{width:30px; height:30px; border-radius:50%; flex:none; display:grid; place-items:center; background:var(--brand); color:#fff; font-size:12.5px; font-weight:600}
+.conta-nome{font-size:14px; font-weight:500; color:var(--ink); max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.conta-chevron{width:15px; height:15px; color:var(--muted); flex:none; transition:transform .18s}
+.conta-trigger[aria-expanded="true"] .conta-chevron{transform:rotate(180deg)}
+
+.conta-menu{position:absolute; right:0; top:calc(100% + 9px); min-width:236px; background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:7px; z-index:20; animation:menuIn .15s ease}
+@keyframes menuIn{from{opacity:0; transform:translateY(-5px)} to{opacity:1; transform:none}}
+.conta-info{display:flex; align-items:center; gap:11px; padding:9px 10px 12px}
+.conta-info .conta-foto,.conta-info .conta-iniciais{width:40px; height:40px; font-size:15px}
+.conta-dados{min-width:0}
+.conta-nome-full{font-family:var(--serif); font-weight:600; font-size:15px; color:var(--ink); line-height:1.15}
+.conta-email{font-size:12.5px; color:var(--muted); margin-top:2px; max-width:172px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.conta-sep{border:0; border-top:1px solid var(--line); margin:2px 4px 5px}
+.conta-sair{display:flex; align-items:center; gap:10px; padding:10px 11px; border-radius:9px; color:var(--ink); font-size:14px; font-weight:500; text-decoration:none; transition:background .12s, color .12s}
+.conta-sair:hover{background:var(--paper-2); color:var(--bad)}
+.conta-sair svg{width:17px; height:17px; color:var(--muted); transition:color .12s}
+.conta-sair:hover svg{color:var(--bad)}
 .brand{display:flex; align-items:center; gap:15px}
 .seal{width:48px; height:48px; border-radius:12px; flex:none; background:linear-gradient(150deg,var(--brand),var(--brand-ink)); display:grid; place-items:center; box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
 .seal svg{display:block; width:29px; height:29px}
@@ -199,6 +219,9 @@ footer .wrap{font-family:var(--mono); letter-spacing:.02em; text-align:center}
   .chat{padding:20px}
   .tabs{width:100%}
   .tab{flex:1; justify-content:center}
+  .conta{right:16px}
+  .conta-nome,.conta-chevron{display:none}
+  .conta-trigger{padding:4px}
 }
 @media(prefers-reduced-motion:reduce){
   *{animation:none !important; transition:none !important}

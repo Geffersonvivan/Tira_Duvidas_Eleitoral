@@ -16,6 +16,7 @@ class UserProfile(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile"
     )
     clerk_id = models.CharField(max_length=100, unique=True, null=True, blank=True, db_index=True)
+    avatar_url = models.URLField(blank=True, default="", help_text="Foto do perfil (Google/Clerk).")
 
     # Sementes de plano (evoluem na fase de billing/tiers).
     is_pro = models.BooleanField(default=False)

@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;450;500;600&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
-<link rel="stylesheet" href="{% static 'css/app.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=21">
 </head>
 <body>
 <header class="top">
@@ -25,7 +25,35 @@
       </div>
     </div>
     {% if user.is_authenticated %}
-    <a class="sair" href="/logout/">Sair</a>
+    <div class="conta">
+      <button class="conta-trigger" id="conta-trigger" aria-haspopup="menu" aria-expanded="false">
+        {% if user.profile.avatar_url %}
+          <img class="conta-foto" src="{{ user.profile.avatar_url }}" alt="" referrerpolicy="no-referrer">
+        {% else %}
+          <span class="conta-iniciais">{{ user.first_name|default:user.email|first|upper }}</span>
+        {% endif %}
+        <span class="conta-nome">{{ user.first_name|default:"Minha conta" }}</span>
+        <svg class="conta-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="conta-menu" id="conta-menu" role="menu" hidden>
+        <div class="conta-info">
+          {% if user.profile.avatar_url %}
+            <img class="conta-foto" src="{{ user.profile.avatar_url }}" alt="" referrerpolicy="no-referrer">
+          {% else %}
+            <span class="conta-iniciais">{{ user.first_name|default:user.email|first|upper }}</span>
+          {% endif %}
+          <div class="conta-dados">
+            <div class="conta-nome-full">{{ user.get_full_name|default:"Minha conta" }}</div>
+            <div class="conta-email">{{ user.email }}</div>
+          </div>
+        </div>
+        <hr class="conta-sep">
+        <a class="conta-sair" href="/logout/" role="menuitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sair
+        </a>
+      </div>
+    </div>
     {% endif %}
   </div>
 </header>
@@ -37,6 +65,24 @@
 <footer>
   <div class="wrap">Tira-Dúvidas Eleitoral · TDE · respostas fundamentadas em norma e jurisprudência vigentes.</div>
 </footer>
+
+{% if user.is_authenticated %}
+<script>
+(function () {
+  var t = document.getElementById("conta-trigger"), m = document.getElementById("conta-menu");
+  if (!t || !m) return;
+  function fechar() { m.hidden = true; t.setAttribute("aria-expanded", "false"); }
+  t.addEventListener("click", function (e) {
+    e.stopPropagation();
+    var abrir = m.hidden;
+    m.hidden = !abrir;
+    t.setAttribute("aria-expanded", String(abrir));
+  });
+  document.addEventListener("click", function (e) { if (!m.hidden && !m.contains(e.target)) fechar(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") fechar(); });
+})();
+</script>
+{% endif %}
 
 {% block scripts %}{% endblock %}
 </body>
