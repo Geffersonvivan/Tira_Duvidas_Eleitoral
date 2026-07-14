@@ -126,6 +126,16 @@ POST /analisar/  {arquivos[]}   # JPG/PNG/PDF, lote
 ## 6. Princípios não-negociáveis (herdados da lógica)
 
 - **Citação:** só `citavel=True` (norma/jurisprudência válida) chega ao campo de fontes.
+- **Anonimato do material de apoio (LGPD) — INVIOLÁVEL:** a resposta **nunca**
+  revela a procedência do conteúdo de contexto (doutrina, livros, apostilas, cursos —
+  ex.: o corpus do Drive). É **terminantemente proibido**, sob qualquer forma, citar,
+  nomear, transcrever ou aludir a: **nome de curso, autor(es), professor(es), editora,
+  obra/título, edição, ISBN, URL/arquivo de origem** ou **qualquer dado pessoal ou
+  particular** presente no material. Aproveita-se **única e exclusivamente o conteúdo
+  (o conhecimento/raciocínio)** — a origem jamais aparece na resposta. As **únicas**
+  fontes que podem ser nomeadas são **norma e jurisprudência válidas** (`citavel=True`),
+  e só pelo campo de fontes citáveis. Na dúvida sobre identificar algo, **omitir**.
+  Vale para o texto da resposta, o campo de fontes, exemplos e qualquer metadado exposto.
 - **Grounded first:** sem base no RAG → incerteza (§8), nunca invenção.
 - **LGPD:** imagem descartada após o parecer (salvo consentimento); auditoria só de metadados.
 - **Escopo:** fora dos 3 assuntos → recusa descontraída.
@@ -140,6 +150,12 @@ POST /analisar/  {arquivos[]}   # JPG/PNG/PDF, lote
 
 - **Embeddings:** Voyage AI (`voyage-3`, 1024 dims — casa com `EMBEDDING_DIM`).
   Integração em `rag/embeddings.py` (rede mockada nos testes); ingestão em `rag/ingest.py`.
+
+- **Corpus do Drive (fonte viva):** `manage.py ingerir_drive` sincroniza a pasta RAG do
+  Google Drive (1º nível = assunto; 2º = natureza). Doutrina/curso entram como **contexto
+  não citável** e **anonimizado** (§6): servem só para redigir, nunca como fonte nem com
+  identificação de origem. PDFs escaneados passam por OCR (tesseract) e o texto é cacheado
+  em `Documento.texto_extraido` (nunca re-OCRa). Incremental por md5; reconcilia remoções.
 
 **A detalhar:**
 1. Índice pgvector (HNSW) e afinação do top-k — migração Postgres-only.
