@@ -1,0 +1,5 @@
+# Pacotes de sistema além do provider Python (Nixpacks detecta o resto).
+# Necessários para o OCR do RAG: tesseract + idioma português + poppler
+# (pdftoppm/pdfinfo, usados pelo pdf2image ao renderizar as páginas).
+[phases.setup]
+aptPkgs = ["tesseract-ocr", "tesseract-ocr-por", "poppler-utils"]

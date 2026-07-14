@@ -1,13 +1,9 @@
 """Cliente do Google Drive para a ingestão do RAG (fonte viva).
 
-Autentica com uma **conta de serviço** (sem login interativo — roda no
-servidor), varre a árvore de pastas e baixa/extrai o texto dos arquivos.
-
-PDFs escaneados (sem camada de texto) passam por **OCR uma única vez**: o texto
-é gravado de volta no Drive como um artefato ``<nome> [OCR].txt`` (marcado em
-`appProperties` com o id/md5 do PDF de origem). Nas próximas rodadas, a
-ingestão lê esse texto e **pula o OCR** — o livro é "lido" só uma vez na vida.
-Por isso o escopo é de leitura **e escrita** no Drive.
+Autentica com uma **conta de serviço** (só leitura — sem login interativo),
+varre a árvore de pastas e baixa/extrai o texto dos arquivos. PDFs escaneados
+passam por **OCR** (tesseract); o texto extraído é depois guardado no nosso
+banco (`Documento.texto_extraido`) para nunca ser re-OCRado.
 
 A classificação (`classificar`/`inferir_tipo`) é pura e testável, sem tocar na
 rede. Os imports do Google/OCR ficam dentro das funções de I/O, de propósito.
@@ -18,15 +14,9 @@ import shutil
 
 from django.conf import settings
 
-# Leitura + escrita: precisamos criar/atualizar os artefatos [OCR] no Drive.
-_SCOPES = ["https://www.googleapis.com/auth/drive"]
+_SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 _MIME_PASTA = "application/vnd.google-apps.folder"
 _MIME_GDOC = "application/vnd.google-apps.document"
-
-#: appProperty que liga o .txt de OCR ao PDF de origem (id) e ao md5 da origem.
-_PROP_ORIGEM = "ocr_source"
-_PROP_MD5 = "ocr_src_md5"
-_SUFIXO_OCR = " [OCR].txt"
 
 
 # --------------------------------------------------------------- classificação
@@ -58,12 +48,6 @@ def classificar(caminho: tuple[str, ...], assunto_map: dict) -> tuple[str | None
     tipo = inferir_tipo(caminho)
     subtema = "/".join(caminho[1:])
     return assunto, tipo, subtema
-
-
-def eh_artefato_ocr(arquivo: dict) -> bool:
-    """True se o arquivo é um texto [OCR] que geramos (não é doc primário)."""
-    props = arquivo.get("appProperties") or {}
-    return _PROP_ORIGEM in props or (arquivo.get("name", "").endswith(_SUFIXO_OCR))
 
 
 # ------------------------------------------------------------------- extração
@@ -132,7 +116,7 @@ def abrir_servico():
 
 
 def _listar_filhos(servico, folder_id: str):
-    campos = "nextPageToken, files(id, name, mimeType, md5Checksum, modifiedTime, appProperties)"
+    campos = "nextPageToken, files(id, name, mimeType, md5Checksum, modifiedTime)"
     q = f"'{folder_id}' in parents and trashed = false"
     token = None
     while True:
@@ -155,16 +139,16 @@ def _listar_filhos(servico, folder_id: str):
 
 
 def percorrer(servico, folder_id: str, caminho: tuple[str, ...] = ()):
-    """Gera (arquivo, caminho, pasta_id) para cada arquivo (não-pasta) da árvore.
+    """Gera (arquivo, caminho) para cada arquivo (não-pasta) da árvore.
 
     `caminho` são os nomes das pastas do folder-raiz até o arquivo (exclusive a
-    raiz); `pasta_id` é o id da pasta onde o arquivo está (para gravar o [OCR]).
+    raiz passada na primeira chamada).
     """
     for item in _listar_filhos(servico, folder_id):
         if item.get("mimeType") == _MIME_PASTA:
             yield from percorrer(servico, item["id"], caminho + (item["name"],))
         else:
-            yield item, caminho, folder_id
+            yield item, caminho
 
 
 def baixar_bytes(servico, arquivo: dict) -> bytes:
@@ -182,68 +166,3 @@ def baixar_bytes(servico, arquivo: dict) -> bytes:
     while not concluido:
         _, concluido = baixador.next_chunk()
     return buf.getvalue()
-
-
-# ------------------------------------------------------------- artefatos [OCR]
-def achar_artefato_ocr(servico, origem_id: str) -> dict | None:
-    """Localiza o .txt de OCR associado a um PDF de origem (por appProperties)."""
-    q = f"trashed = false and appProperties has {{ key='{_PROP_ORIGEM}' and value='{origem_id}' }}"
-    resp = (
-        servico.files()
-        .list(
-            q=q,
-            fields="files(id, name, appProperties)",
-            spaces="drive",
-            pageSize=1,
-            supportsAllDrives=True,
-            includeItemsFromAllDrives=True,
-        )
-        .execute()
-    )
-    arquivos = resp.get("files", [])
-    return arquivos[0] if arquivos else None
-
-
-def ler_texto_ocr(servico, file_id: str) -> str:
-    """Lê o conteúdo de um artefato [OCR] (arquivo texto no Drive)."""
-    return baixar_bytes(servico, {"id": file_id, "mimeType": "text/plain"}).decode(
-        "utf-8", errors="ignore"
-    )
-
-
-def gravar_artefato_ocr(
-    servico,
-    *,
-    nome_pdf: str,
-    pasta_id: str,
-    texto: str,
-    origem_id: str,
-    origem_md5: str,
-    existente_id: str | None = None,
-) -> str:
-    """Cria/atualiza o artefato ``<nome> [OCR].txt`` no Drive e retorna o id."""
-    from googleapiclient.http import MediaInMemoryUpload
-
-    stem = nome_pdf.rsplit(".", 1)[0]
-    media = MediaInMemoryUpload(texto.encode("utf-8"), mimetype="text/plain", resumable=False)
-    props = {_PROP_ORIGEM: origem_id, _PROP_MD5: origem_md5}
-    if existente_id:
-        servico.files().update(
-            fileId=existente_id,
-            media_body=media,
-            body={"appProperties": props},
-            supportsAllDrives=True,
-        ).execute()
-        return existente_id
-    corpo = {
-        "name": stem + _SUFIXO_OCR,
-        "parents": [pasta_id],
-        "mimeType": "text/plain",
-        "appProperties": props,
-    }
-    novo = (
-        servico.files()
-        .create(body=corpo, media_body=media, fields="id", supportsAllDrives=True)
-        .execute()
-    )
-    return novo["id"]

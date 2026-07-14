@@ -65,6 +65,9 @@ class Documento(models.Model):
     #: Sub-tema derivado da subpasta na origem (organização/busca refinada);
     #: não afeta o `assunto` nem a citabilidade.
     subtema = models.CharField(max_length=200, blank=True, default="")
+    #: Cache do texto extraído (OCR/nativo). Guardado para NUNCA re-OCRar: se o
+    #: `conteudo_hash` não mudou, reindexa a partir daqui, sem baixar/OCR de novo.
+    texto_extraido = models.TextField(blank=True, default="")
 
     criado_em = models.DateTimeField(auto_now_add=True)
 
