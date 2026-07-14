@@ -19,3 +19,8 @@ venv/
 .DS_Store
 .idea/
 .vscode/
+
+# Chaves de conta de serviço do Google (NUNCA commitar)
+tira-duvidas-eleitoral-*.json
+*service-account*.json
+*serviceaccount*.json

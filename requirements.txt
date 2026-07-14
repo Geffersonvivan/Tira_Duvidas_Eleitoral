@@ -19,3 +19,7 @@ PyJWT>=2.13.0
 cryptography>=48.0.1
 svix>=1.0
 requests>=2.32
+
+# --- RAG · ingestão do Google Drive (fonte viva) ---
+google-api-python-client>=2.130
+google-auth>=2.30

@@ -97,6 +97,25 @@ LOGIN_URL = "/"
 # (0 = idêntico). ~0.12 corresponde a similaridade ~0.88. Calibrar com dados.
 ANALYTICS_LIMIAR_DISTANCIA = float(os.environ.get("ANALYTICS_LIMIAR_DISTANCIA", "0.12"))
 
+# --- RAG · ingestão do Google Drive (fonte viva) ----------------------
+# A pasta "RAG" no Drive é compartilhada (leitura) com uma conta de serviço.
+# Estrutura: RAG/<Assunto>/<Natureza>/arquivos. O 1º nível vira `assunto`
+# (mapa abaixo); o 2º nível define a natureza (doutrina/curso → contexto,
+# não citável). GOOGLE_SERVICE_ACCOUNT_JSON = conteúdo do JSON da chave.
+GOOGLE_SERVICE_ACCOUNT_JSON = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON", "")
+RAG_DRIVE_ROOT_FOLDER_ID = os.environ.get(
+    "RAG_DRIVE_ROOT_FOLDER_ID", "1ZBob8k0drK6m38TghIg6p_OG0avxs3qZ"
+)
+# Nome da pasta-raiz no Drive → assunto do RAG (enum rag.models.Assunto).
+RAG_DRIVE_ASSUNTO_MAP = {
+    "Juridico": "direito",
+    "Jurídico": "direito",
+    "Contábil": "contabilidade",
+    "Contabil": "contabilidade",
+    "Gestão de Tráfego": "impulsionamento",
+    "Gestao de Trafego": "impulsionamento",
+}
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",

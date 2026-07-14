@@ -52,9 +52,20 @@ class Documento(models.Model):
     vigencia_fim = models.DateField(null=True, blank=True)
 
     fonte_url = models.URLField(blank=True)
-    #: sha256 do texto ingerido — permite ingestão incremental (pula re-embedding
-    #: quando o conteúdo não mudou, evitando estourar a cota de embeddings).
+    #: Token de mudança do conteúdo — permite ingestão incremental (pula
+    #: re-embedding quando não mudou). sha256 do texto (manifesto) ou
+    #: md5/revisão do arquivo (Google Drive).
     conteudo_hash = models.CharField(max_length=64, blank=True, default="")
+
+    #: Procedência: "" (manifesto curado) ou "drive" (Google Drive, fonte viva).
+    origem = models.CharField(max_length=20, blank=True, default="")
+    #: ID estável na origem (ex.: ID do arquivo no Drive) — chave de upsert e
+    #: reconciliação (documento removido da origem sai do RAG).
+    origem_id = models.CharField(max_length=128, blank=True, default="")
+    #: Sub-tema derivado da subpasta na origem (organização/busca refinada);
+    #: não afeta o `assunto` nem a citabilidade.
+    subtema = models.CharField(max_length=200, blank=True, default="")
+
     criado_em = models.DateTimeField(auto_now_add=True)
 
     objects = DocumentoQuerySet.as_manager()
