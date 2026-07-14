@@ -1,16 +1,20 @@
-"""Ingestão do RAG a partir do Google Drive (fonte viva).
+"""Ingestão do RAG a partir do Google Drive (fonte viva), com OCR híbrido.
 
-A pasta-raiz "RAG" no Drive é compartilhada (leitura) com uma conta de serviço.
-Estrutura esperada: ``RAG/<Assunto>/<Natureza>/arquivos`` — o 1º nível vira o
-`assunto` (settings.RAG_DRIVE_ASSUNTO_MAP) e o 2º define a natureza
-(doutrina/curso → contexto, não citável; norma/jurisprudência → citável).
+Estrutura no Drive: ``RAG/<Assunto>/<Natureza>/arquivos`` — o 1º nível vira o
+`assunto` (settings.RAG_DRIVE_ASSUNTO_MAP) e o 2º a natureza (doutrina/curso →
+contexto, não citável).
 
-Reexecutar é **incremental** (usa o md5/revisão do Drive: só re-embeda o que
-mudou, poupando a cota Voyage) e **reconcilia** remoções (arquivo apagado no
-Drive sai do RAG) — exceto quando restrito a uma pasta com ``--pasta``.
+**OCR híbrido (opção A):** PDFs escaneados passam por OCR **uma vez** e o texto
+é gravado de volta no Drive como ``<nome> [OCR].txt``. Nas próximas rodadas a
+ingestão lê esse texto e pula o OCR — o livro é "lido" só uma vez na vida.
 
-Uso:
-    python manage.py ingerir_drive [--pasta "Contábil"] [--dry-run] [--force]
+Fluxo em duas pontas (por causa do banco de prod ser interno e o OCR ser pesado):
+  1. OCR — rode onde houver tesseract+poppler (ex.: sua máquina), sem tocar no
+     banco:   ``python manage.py ingerir_drive --somente-ocr [--pasta X]``
+  2. Ingestão — rode no Railway (lê o texto/[OCR], embeda no pgvector):
+     ``railway ssh "/opt/venv/bin/python manage.py ingerir_drive [--pasta X]"``
+
+Incremental pelo md5/revisão do Drive; reconcilia remoções (varredura completa).
 """
 
 from django.conf import settings
@@ -21,23 +25,20 @@ from rag.models import TIPOS_CITAVEIS, Assunto, Documento
 
 
 class Command(BaseCommand):
-    help = "Ingere o RAG a partir da pasta do Google Drive (incremental, fonte viva)."
+    help = "Ingere o RAG do Google Drive com OCR híbrido (incremental, fonte viva)."
 
     def add_arguments(self, parser) -> None:
+        parser.add_argument("--pasta", default="", help="Restringe a uma pasta-raiz (assunto).")
         parser.add_argument(
-            "--pasta",
-            default="",
-            help="Restringe a uma pasta-raiz (assunto), ex.: --pasta 'Contábil'.",
+            "--somente-ocr",
+            action="store_true",
+            help="Só faz OCR dos scans e grava o [OCR] no Drive (não embeda; não usa o banco).",
         )
         parser.add_argument(
-            "--dry-run",
-            action="store_true",
-            help="Só lista o que faria (não baixa nem gera embeddings).",
+            "--dry-run", action="store_true", help="Só lista o que faria (sem baixar/OCR/embed)."
         )
         parser.add_argument(
-            "--force",
-            action="store_true",
-            help="Re-embeda tudo, mesmo o que não mudou (ignora o md5).",
+            "--force", action="store_true", help="Refaz OCR/embedding mesmo do que não mudou."
         )
 
     def handle(self, *args, **opts) -> None:
@@ -45,26 +46,26 @@ class Command(BaseCommand):
         if not folder_id:
             raise CommandError("RAG_DRIVE_ROOT_FOLDER_ID não configurado.")
         mapa = settings.RAG_DRIVE_ASSUNTO_MAP
-        pasta = opts["pasta"].strip()
-        dry = opts["dry_run"]
-        force = opts["force"]
+        pasta, somente_ocr = opts["pasta"].strip(), opts["somente_ocr"]
+        dry, force = opts["dry_run"], opts["force"]
 
         try:
             servico = drive.abrir_servico()
-        except Exception as exc:  # credencial ausente/ inválida
+        except Exception as exc:
             raise CommandError(str(exc)) from exc
 
-        ingeridos = pulados = ignorados = vazios = 0
+        ingeridos = pulados = ignorados = vazios = ocr_feitos = sem_ocr = 0
         ids_vistos: list[str] = []
 
-        for arquivo, caminho in drive.percorrer(servico, folder_id):
+        for arquivo, caminho, pasta_id in drive.percorrer(servico, folder_id):
+            if drive.eh_artefato_ocr(arquivo):
+                continue  # os [OCR].txt são consumidos pelo PDF de origem, não como doc
             if pasta and (not caminho or caminho[0] != pasta):
                 continue
 
             assunto, tipo, subtema = drive.classificar(caminho, mapa)
             nome = arquivo.get("name", "")
             titulo = nome.rsplit(".", 1)[0].strip() or nome
-
             if assunto not in Assunto.values:
                 ignorados += 1
                 onde = "/".join(caminho)
@@ -72,34 +73,76 @@ class Command(BaseCommand):
                 continue
 
             ids_vistos.append(arquivo["id"])
-            marca = "citável" if tipo in TIPOS_CITAVEIS else "contexto"
-
-            # Incremental: md5 do Drive (Google Docs não têm md5 → usa modifiedTime).
             token = arquivo.get("md5Checksum") or arquivo.get("modifiedTime", "")
-            anterior = Documento.objects.filter(origem="drive", origem_id=arquivo["id"]).first()
-            inalterado = (
-                anterior is not None
-                and anterior.conteudo_hash == token
-                and anterior.trechos.exists()
+            eh_pdf = (arquivo.get("mimeType") == "application/pdf") or nome.lower().endswith(".pdf")
+
+            # Artefato [OCR] já pronto para este PDF?
+            artefato = drive.achar_artefato_ocr(servico, arquivo["id"]) if eh_pdf else None
+            ocr_fresco = bool(
+                artefato and (artefato.get("appProperties") or {}).get("ocr_src_md5") == token
             )
 
             if dry:
-                acao = "= sem mudança" if (inalterado and not force) else "↑ (re)ingeriria"
-                self.stdout.write(f"  {acao} [{assunto}/{tipo}·{marca}] {titulo}")
+                if ocr_fresco:
+                    plano = "via [OCR] pronto"
+                elif eh_pdf:
+                    plano = "baixaria (nativo ou OCR)"
+                else:
+                    plano = "texto direto"
+                self.stdout.write(f"  · [{assunto}/{tipo}] {titulo} — {plano}")
                 continue
 
-            if inalterado and not force:
-                pulados += 1
-                self.stdout.write(f"  = {titulo} — sem mudança")
-                continue
+            # Incremental (ingestão): pula sem baixar nada se o md5 não mudou.
+            if not somente_ocr and not force:
+                anterior = Documento.objects.filter(origem="drive", origem_id=arquivo["id"]).first()
+                if anterior and anterior.conteudo_hash == token and anterior.trechos.exists():
+                    pulados += 1
+                    self.stdout.write(f"  = {titulo} — sem mudança")
+                    continue
 
-            dados = drive.baixar_bytes(servico, arquivo)
-            texto = drive.extrair_texto(arquivo, dados)
+            # ---- obtém o texto (preferindo o [OCR] já gravado) ----
+            texto = ""
+            if ocr_fresco and not force:
+                texto = drive.ler_texto_ocr(servico, artefato["id"])
+            elif not eh_pdf:
+                texto = drive.extrair_texto(arquivo, drive.baixar_bytes(servico, arquivo))
+            else:
+                dados = drive.baixar_bytes(servico, arquivo)
+                texto = drive.texto_de_pdf(dados)
+                if not texto.strip():  # PDF escaneado → precisa de OCR
+                    if not drive.ocr_disponivel():
+                        sem_ocr += 1
+                        self.stderr.write(
+                            f"  ! scan sem OCR: {titulo} — rode --somente-ocr onde haja tesseract"
+                        )
+                        continue
+
+                    def _prog(feito, total, _t=titulo):
+                        self.stdout.write(f"    … OCR {_t[:40]}: {feito}/{total} págs", ending="\r")
+
+                    texto = drive.ocr_pdf(dados, progresso=_prog)
+                    self.stdout.write("")  # quebra a linha do \r
+                    drive.gravar_artefato_ocr(
+                        servico,
+                        nome_pdf=nome,
+                        pasta_id=pasta_id,
+                        texto=texto,
+                        origem_id=arquivo["id"],
+                        origem_md5=token,
+                        existente_id=artefato["id"] if artefato else None,
+                    )
+                    ocr_feitos += 1
+                    self.stdout.write(f"  ✎ OCR gravado no Drive: {titulo} [OCR].txt")
+
+            if somente_ocr:
+                continue  # etapa de OCR não embeda nem toca no banco
+
             if not texto.strip():
                 vazios += 1
-                self.stderr.write(f"  ! sem texto extraível: {titulo}")
+                self.stderr.write(f"  ! sem texto: {titulo}")
                 continue
 
+            # ---- grava no pgvector ----
             doc, _ = Documento.objects.update_or_create(
                 origem="drive",
                 origem_id=arquivo["id"],
@@ -114,20 +157,25 @@ class Command(BaseCommand):
                     "subtema": subtema,
                 },
             )
-            doc.trechos.all().delete()  # re-ingestão limpa
+            doc.trechos.all().delete()
             trechos = ingest.ingerir(doc, texto)
             ingeridos += 1
+            marca = "citável" if tipo in TIPOS_CITAVEIS else "contexto"
             self.stdout.write(f"  ✓ {titulo} [{assunto}/{tipo}·{marca}] — {len(trechos)} trechos")
 
-        # Reconciliação: remove do RAG o que sumiu do Drive (só em varredura completa).
+        # Reconciliação: remove do RAG o que sumiu do Drive (só varredura completa e ingestão).
         removidos = 0
-        if not dry and not pasta:
+        if not dry and not somente_ocr and not pasta:
             orfaos = Documento.objects.filter(origem="drive").exclude(origem_id__in=ids_vistos)
             removidos = orfaos.count()
             orfaos.delete()
 
-        resumo = (
-            f"Concluído: {ingeridos} (re)ingeridos, {pulados} sem mudança, "
-            f"{vazios} sem texto, {ignorados} ignorados, {removidos} removidos."
-        )
+        if somente_ocr:
+            resumo = f"OCR: {ocr_feitos} gravados no Drive, {sem_ocr} sem OCR possível."
+        else:
+            resumo = (
+                f"Concluído: {ingeridos} (re)ingeridos, {pulados} sem mudança, {ocr_feitos} OCR, "
+                f"{vazios} sem texto, {sem_ocr} scans sem OCR, {ignorados} ignorados, "
+                f"{removidos} removidos."
+            )
         self.stdout.write(self.style.SUCCESS(resumo) if not dry else resumo)

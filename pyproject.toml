@@ -28,6 +28,8 @@ dependencies = [
     "requests>=2.32",            # chamadas à API do Clerk (JWKS/JIT)
     "google-api-python-client>=2.130",  # Google Drive API (ingestão do RAG)
     "google-auth>=2.30",         # conta de serviço p/ o Drive (sem login interativo)
+    "pytesseract>=0.3.13",       # OCR de PDFs escaneados (requer tesseract no SO)
+    "pdf2image>=1.17",           # renderiza páginas do PDF p/ o OCR (requer poppler)
 ]
 
 [project.optional-dependencies]
