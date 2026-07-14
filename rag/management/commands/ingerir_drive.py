@@ -18,6 +18,7 @@ Uso:
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+from django.db import connection
 
 from rag import drive, ingest
 from rag.models import TIPOS_CITAVEIS, Assunto, Documento
@@ -106,6 +107,10 @@ class Command(BaseCommand):
                                 f"    … OCR {_t[:38]}: {feito}/{total} págs", ending="\r"
                             )
 
+                        # OCR longo não deve segurar a conexão ociosa; fecha aqui
+                        # e o próximo acesso ao banco reconecta (keepalives cobrem
+                        # a fase de embedding). Evita "connection dropped" pós-OCR.
+                        connection.close()
                         texto = drive.ocr_pdf(dados, progresso=_prog)
                         self.stdout.write("")
                         ocr_feitos += 1

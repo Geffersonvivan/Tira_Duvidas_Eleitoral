@@ -145,6 +145,15 @@ if _db_url and _db_url.startswith("postgres"):
             "PASSWORD": _u.password or "",
             "HOST": _u.hostname or "",
             "PORT": str(_u.port or ""),
+            # TCP keepalives: mantêm a conexão viva durante operações longas sem
+            # SQL (ex.: OCR de um livro inteiro na ingestão do Drive), evitando
+            # que o proxy/servidor derrube uma conexão ociosa. Inofensivo em prod.
+            "OPTIONS": {
+                "keepalives": 1,
+                "keepalives_idle": 15,
+                "keepalives_interval": 10,
+                "keepalives_count": 5,
+            },
         }
     }
 else:
