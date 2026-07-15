@@ -158,7 +158,9 @@ POST /analisar/  {arquivos[]}   # JPG/PNG/PDF, lote
   em `Documento.texto_extraido` (nunca re-OCRa). Incremental por md5; reconcilia remoções.
 
 **A detalhar:**
+
 1. Índice pgvector (HNSW) e afinação do top-k — migração Postgres-only.
-2. Estratégia de OCR (visão nativa do Claude já cobre; avaliar OCR dedicado p/ baixa qualidade).
+2. Embeddings dos livros do Drive (~4M tokens): rate limit da Voyage é o gargalo
+   (grátis = 3 RPM / 10K TPM). Requests paginadas com throttle; avaliar tier pago.
 3. Processo operacional de ingestão do RAG e versionamento das fontes.
 4. Autenticação/perfis (perfil único no MVP — §15 lógica).
