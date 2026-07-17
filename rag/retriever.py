@@ -7,8 +7,11 @@ Devolve dois conjuntos distintos (lógica.md §4):
 
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from datetime import date
 
 from django.db import connection
+from django.db.models import Q
+from django.utils import timezone
 
 from rag.models import Documento, Trecho
 
@@ -35,6 +38,23 @@ def separar_por_citabilidade(trechos: Iterable[Trecho]) -> Recuperacao:
     return Recuperacao(contexto=trechos, fontes_citaveis=fontes)
 
 
+def filtrar_vigentes(qs, hoje: date | None = None):
+    """Remove trechos de documentos revogados ou fora do período de vigência.
+
+    Norma revogada/expirada não pode nem alimentar o CONTEXTO do LLM: redigir
+    com base em lei que já não vale induz a resposta ao erro — pior ainda porque
+    o modelo pode citar o conteúdo sem que ela apareça em `fontes_citaveis` (que
+    já filtra por `pode_citar`). Doutrina/curso (vigente=True, sem datas) seguem
+    no contexto — são apoio válido para a redação, apenas não citáveis.
+    """
+    hoje = hoje or timezone.now().date()
+    return qs.filter(
+        Q(documento__vigente=True)
+        & (Q(documento__vigencia_inicio__isnull=True) | Q(documento__vigencia_inicio__lte=hoje))
+        & (Q(documento__vigencia_fim__isnull=True) | Q(documento__vigencia_fim__gte=hoje))
+    )
+
+
 def buscar(
     query_embedding: list[float],
     *,
@@ -47,6 +67,9 @@ def buscar(
     ele não trouxer nada (ex.: classificação e tag não batem), refaz a busca em
     todos os assuntos. Assim evita o "Ausência de Contexto" quando a pergunta
     cai num assunto diferente do que o documento relevante está marcado.
+
+    Documentos fora de vigência são excluídos antes da ordenação (ver
+    `filtrar_vigentes`) — nunca entram no contexto nem nas fontes.
     """
     if connection.vendor != "postgresql":
         raise NotImplementedError(
@@ -55,7 +78,7 @@ def buscar(
 
     from pgvector.django import CosineDistance  # import tardio: só no caminho Postgres
 
-    base = Trecho.objects.select_related("documento").exclude(embedding=None)
+    base = filtrar_vigentes(Trecho.objects.select_related("documento").exclude(embedding=None))
 
     def ordenar(qs):
         return list(qs.order_by(CosineDistance("embedding", query_embedding))[:k])
