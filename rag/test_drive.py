@@ -137,3 +137,89 @@ def test_reindexa_do_cache_sem_reocr(monkeypatch, settings) -> None:
 
     call_command("ingerir_drive")
     assert embutidos == ["TEXTO EM CACHE"]
+
+
+# ---------------------------------------------- resiliência e 0 trechos
+@pytest.mark.django_db
+def test_falha_de_embedding_nao_aborta_lote(monkeypatch, settings) -> None:
+    """Cota estourada num doc não derruba os outros; doc fica p/ --so-vazios."""
+    settings.GOOGLE_SERVICE_ACCOUNT_JSON = '{"fake": true}'
+    settings.RAG_DRIVE_ASSUNTO_MAP = MAPA
+    arquivos = [
+        (_pdf("f1", "quebra.pdf", "aaa"), ("Juridico", "Doutrina")),
+        (_pdf("f2", "ok.pdf", "bbb"), ("Juridico", "Doutrina")),
+    ]
+
+    def ingerir(doc, t, **k):
+        if doc.origem_id == "f1":
+            raise RuntimeError("Voyage: esgotadas as tentativas (rate limit).")
+        Trecho.objects.create(documento=doc, ordem=0, conteudo="x")
+        return [1]
+
+    _mock(monkeypatch, arquivos, ingerir=ingerir)
+    call_command("ingerir_drive")  # não deve levantar
+
+    # f1 persiste com 0 trechos (cache guardado); f2 indexado normalmente.
+    assert Documento.objects.get(origem_id="f1").trechos.count() == 0
+    assert Documento.objects.get(origem_id="f1").texto_extraido == "texto nativo"
+    assert Documento.objects.get(origem_id="f2").trechos.count() == 1
+
+
+@pytest.mark.django_db
+def test_so_vazios_reprocessa_apenas_docs_sem_trechos(monkeypatch, settings) -> None:
+    settings.GOOGLE_SERVICE_ACCOUNT_JSON = '{"fake": true}'
+    settings.RAG_DRIVE_ASSUNTO_MAP = MAPA
+    # f1 já indexado (tem trecho); f2 registrado mas vazio (falhou antes).
+    cheio = Documento.objects.create(
+        origem="drive",
+        origem_id="f1",
+        titulo="cheio",
+        tipo="doutrina",
+        assunto="direito",
+        conteudo_hash="aaa",
+        texto_extraido="T1",
+    )
+    Trecho.objects.create(documento=cheio, ordem=0, conteudo="ja tem")
+    Documento.objects.create(
+        origem="drive",
+        origem_id="f2",
+        titulo="vazio",
+        tipo="doutrina",
+        assunto="direito",
+        conteudo_hash="bbb",
+        texto_extraido="T2",
+    )
+    arquivos = [
+        (_pdf("f1", "cheio.pdf", "aaa"), ("Juridico", "Doutrina")),
+        (_pdf("f2", "vazio.pdf", "bbb"), ("Juridico", "Doutrina")),
+    ]
+    tocados = []
+
+    def ingerir(doc, t, **k):
+        tocados.append(doc.origem_id)
+        Trecho.objects.create(documento=doc, ordem=0, conteudo="novo")
+        return [1]
+
+    _mock(monkeypatch, arquivos, ingerir=ingerir)
+    call_command("ingerir_drive", "--so-vazios")
+
+    assert tocados == ["f2"]  # só o vazio foi reprocessado
+    assert Documento.objects.get(origem_id="f2").trechos.count() == 1
+
+
+@pytest.mark.django_db
+def test_so_vazios_nao_reconcilia(monkeypatch, settings) -> None:
+    """Modo parcial não pode apagar docs ausentes da lista (visão incompleta)."""
+    settings.GOOGLE_SERVICE_ACCOUNT_JSON = '{"fake": true}'
+    settings.RAG_DRIVE_ASSUNTO_MAP = MAPA
+    Documento.objects.create(
+        origem="drive",
+        origem_id="outro",
+        titulo="não listado",
+        tipo="doutrina",
+        assunto="direito",
+        conteudo_hash="zzz",
+    )
+    _mock(monkeypatch, [])  # árvore "vazia" nesta chamada
+    call_command("ingerir_drive", "--so-vazios")
+    assert Documento.objects.filter(origem_id="outro").exists()  # não foi reconciliado
