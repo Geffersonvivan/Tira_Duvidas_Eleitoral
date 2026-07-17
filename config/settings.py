@@ -42,6 +42,10 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    # HttpOnly no cookie de sessão (default do Django, explícito aqui). O cookie
+    # CSRF fica legível de propósito — o frontend lê o token para o header nas
+    # chamadas AJAX; torná-lo HttpOnly quebraria o envio do X-CSRFToken.
+    SESSION_COOKIE_HTTPONLY = True
     # HSTS — o site é servido só por HTTPS (Railway + redirect acima).
     # Configurável; 0 desliga. includeSubDomains/preload são opt-in (cuidado).
     SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_HSTS_SECONDS", "31536000"))
@@ -249,3 +253,21 @@ LOGGING = {
         "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False},
     },
 }
+
+# --- Observabilidade (Sentry) -----------------------------------------
+# Ativo só com SENTRY_DSN definido e fora do DEBUG. send_default_pii=False por
+# LGPD (não envia corpo de request, e-mail nem a pergunta). traces_sample_rate
+# controla o APM (0 = só erros, para não gerar custo/volume).
+SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
+if SENTRY_DSN and not DEBUG:
+    try:
+        import sentry_sdk
+
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            traces_sample_rate=float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0")),
+            send_default_pii=False,
+            environment=os.environ.get("RAILWAY_ENVIRONMENT_NAME", "production"),
+        )
+    except ImportError:  # sentry-sdk não instalado neste ambiente — segue sem APM
+        pass

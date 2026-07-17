@@ -12,10 +12,31 @@ from conversas.models import Conversa
 from core.views import home
 
 
+@pytest.mark.django_db  # o health agora faz SELECT no banco
 def test_health_ok() -> None:
     resp = Client().get("/health/")
     assert resp.status_code == 200
-    assert resp.json()["status"] == "ok"
+    corpo = resp.json()
+    assert corpo["status"] == "ok"
+    assert corpo["banco"] == "ok"  # agora valida o banco de fato
+
+
+@override_settings(DEBUG=False, SECRET_KEY="dev-inseguro-troque-no-env")  # noqa: S106
+def test_checar_config_producao_bloqueia_secret_key_default(monkeypatch) -> None:
+    from core.apps import _checar_config_producao
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "x")
+    monkeypatch.setenv("VOYAGE_API_KEY", "y")
+    problemas = _checar_config_producao(None)
+    ids = {p.id for p in problemas}
+    assert "core.E001" in ids  # secret key insegura em produção → Error
+
+
+@override_settings(DEBUG=True)
+def test_checar_config_producao_silencioso_em_debug() -> None:
+    from core.apps import _checar_config_producao
+
+    assert _checar_config_producao(None) == []
 
 
 def test_home_renderiza() -> None:
