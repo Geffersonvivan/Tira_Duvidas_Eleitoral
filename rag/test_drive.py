@@ -44,6 +44,39 @@ def test_classificar() -> None:
     assert drive.classificar(("Outra", "Sub"), MAPA)[0] is None
 
 
+# ------------------------------------------------------------- extração .docx
+def _docx_bytes(paragrafos: list[str]) -> bytes:
+    import io
+
+    from docx import Document
+
+    doc = Document()
+    for p in paragrafos:
+        doc.add_paragraph(p)
+    buf = io.BytesIO()
+    doc.save(buf)
+    return buf.getvalue()
+
+
+def test_texto_de_docx_extrai_paragrafos() -> None:
+    dados = _docx_bytes(["Primeiro parágrafo.", "", "Segundo parágrafo."])
+    texto = drive.texto_de_docx(dados)
+    assert "Primeiro parágrafo." in texto
+    assert "Segundo parágrafo." in texto
+
+
+def test_extrair_texto_roteia_docx_por_mime(monkeypatch) -> None:
+    monkeypatch.setattr(drive, "texto_de_docx", lambda d: "TEXTO DOCX")
+    arq = {"name": "sem_extensao", "mimeType": drive._MIME_DOCX}
+    assert drive.extrair_texto(arq, b"x") == "TEXTO DOCX"
+
+
+def test_extrair_texto_roteia_docx_por_extensao(monkeypatch) -> None:
+    monkeypatch.setattr(drive, "texto_de_docx", lambda d: "TEXTO DOCX")
+    arq = {"name": "peça.DOCX", "mimeType": ""}  # extensão em caixa alta
+    assert drive.extrair_texto(arq, b"x") == "TEXTO DOCX"
+
+
 # ------------------------------------------------------------------- comando
 @pytest.mark.django_db
 def test_ingere_classifica_e_reconcilia(monkeypatch, settings) -> None:

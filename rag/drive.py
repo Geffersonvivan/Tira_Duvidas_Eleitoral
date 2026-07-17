@@ -17,6 +17,7 @@ from django.conf import settings
 _SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 _MIME_PASTA = "application/vnd.google-apps.folder"
 _MIME_GDOC = "application/vnd.google-apps.document"
+_MIME_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
 
 # --------------------------------------------------------------- classificação
@@ -59,15 +60,29 @@ def texto_de_pdf(dados: bytes) -> str:
     return "\n".join((pag.extract_text() or "") for pag in leitor.pages)
 
 
+def texto_de_docx(dados: bytes) -> str:
+    """Texto de um .docx (Word): parágrafos + células de tabela."""
+    from docx import Document  # python-docx
+
+    doc = Document(io.BytesIO(dados))
+    partes = [p.text for p in doc.paragraphs]
+    for tabela in doc.tables:
+        for linha in tabela.rows:
+            partes.extend(cel.text for cel in linha.cells)
+    return "\n".join(p for p in partes if p.strip())
+
+
 def extrair_texto(arquivo: dict, dados: bytes) -> str:
-    """Texto direto de txt/markdown/Google Docs (sem OCR). PDF: camada nativa."""
+    """Texto direto de txt/markdown/Google Docs/.docx (sem OCR). PDF: camada nativa."""
     nome = (arquivo.get("name") or "").lower()
     mime = arquivo.get("mimeType") or ""
     if mime == _MIME_GDOC or nome.endswith((".txt", ".md")):
         return dados.decode("utf-8", errors="ignore")
+    if mime == _MIME_DOCX or nome.endswith(".docx"):
+        return texto_de_docx(dados)
     if mime == "application/pdf" or nome.endswith(".pdf"):
         return texto_de_pdf(dados)
-    return ""  # formato não suportado (ex.: .docx) — ignora por ora
+    return ""  # formato ainda não suportado (ex.: .doc antigo, .rtf) — ignora
 
 
 def ocr_disponivel() -> bool:
