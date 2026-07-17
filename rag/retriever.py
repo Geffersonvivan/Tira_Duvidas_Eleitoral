@@ -76,12 +76,17 @@ def buscar(
             "Busca vetorial requer Postgres com pgvector (DATABASE_URL=postgres://...)."
         )
 
+    from django.conf import settings
     from pgvector.django import CosineDistance  # import tardio: só no caminho Postgres
 
+    limiar = getattr(settings, "RAG_DISTANCIA_MAX", None)
     base = filtrar_vigentes(Trecho.objects.select_related("documento").exclude(embedding=None))
 
     def ordenar(qs):
-        return list(qs.order_by(CosineDistance("embedding", query_embedding))[:k])
+        qs = qs.annotate(_dist=CosineDistance("embedding", query_embedding))
+        if limiar is not None:
+            qs = qs.filter(_dist__lte=limiar)  # descarta trecho fraco (irrelevante)
+        return list(qs.order_by("_dist")[:k])
 
     trechos = []
     if assunto:

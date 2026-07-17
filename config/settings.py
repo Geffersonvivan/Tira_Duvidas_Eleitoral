@@ -104,6 +104,23 @@ RATE_LIMIT_MATERIAIS_POR_MIN = int(os.environ.get("RATE_LIMIT_MATERIAIS_POR_MIN"
 # (0 = idêntico). ~0.12 corresponde a similaridade ~0.88. Calibrar com dados.
 ANALYTICS_LIMIAR_DISTANCIA = float(os.environ.get("ANALYTICS_LIMIAR_DISTANCIA", "0.12"))
 
+# --- RAG · recuperação -------------------------------------------------
+# Distância de cosseno máxima aceita num trecho recuperado (0 = idêntico,
+# 2 = oposto). Acima disso o trecho é descartado por irrelevância, evitando
+# alimentar o LLM com contexto fraco. Vazio = desligado (sem corte) — calibrar
+# com o golden set antes de ativar (um valor muito baixo derruba contexto útil).
+_rag_dist = os.environ.get("RAG_DISTANCIA_MAX", "").strip()
+RAG_DISTANCIA_MAX = float(_rag_dist) if _rag_dist else None
+
+# --- LGPD · retenção de dados -----------------------------------------
+# Expurgo executado pelo comando `expurgar_dados` (agende no cron/Railway).
+# 0 = desligado (nada é apagado por idade). Defina os prazos conforme a
+# política de privacidade antes de ativar. Perguntas registradas são anônimas
+# (sem vínculo com usuário); conversas são por usuário e também exclusíveis
+# sob demanda (direito ao esquecimento) via API.
+LGPD_RETENCAO_PERGUNTAS_DIAS = int(os.environ.get("LGPD_RETENCAO_PERGUNTAS_DIAS", "0"))
+LGPD_RETENCAO_CONVERSAS_DIAS = int(os.environ.get("LGPD_RETENCAO_CONVERSAS_DIAS", "0"))
+
 # --- RAG · ingestão do Google Drive (fonte viva) ----------------------
 # A pasta "RAG" no Drive é compartilhada (leitura) com uma conta de serviço.
 # Estrutura: RAG/<Assunto>/<Natureza>/arquivos. O 1º nível vira `assunto`

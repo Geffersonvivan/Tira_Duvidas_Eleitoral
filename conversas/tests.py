@@ -14,6 +14,28 @@ def test_listar_sem_login_retorna_vazio() -> None:
     assert resp.data == []
 
 
+def test_apagar_todas_sem_login_retorna_401() -> None:
+    resp = APIClient().delete("/api/conversas/tudo/")
+    assert resp.status_code == 401
+
+
+@pytest.mark.django_db
+def test_apagar_todas_remove_so_do_proprio_usuario(django_user_model) -> None:
+    a = django_user_model.objects.create(username="a")
+    b = django_user_model.objects.create(username="b")
+    Conversa.objects.create(user=a, titulo="da A")
+    Conversa.objects.create(user=a, titulo="outra da A")
+    Conversa.objects.create(user=b, titulo="da B")
+    c = APIClient()
+    c.force_login(a)
+
+    resp = c.delete("/api/conversas/tudo/")
+
+    assert resp.status_code == 200
+    assert not Conversa.objects.filter(user=a).exists()
+    assert Conversa.objects.filter(user=b).count() == 1  # não mexe na de outro
+
+
 @pytest.mark.django_db
 def test_listar_so_do_proprio_usuario(django_user_model) -> None:
     a = django_user_model.objects.create(username="a")

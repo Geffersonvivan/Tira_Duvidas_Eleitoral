@@ -19,6 +19,19 @@ def listar(request: Request) -> Response:
     )
 
 
+@api_view(["DELETE"])
+def apagar_todas(request: Request) -> Response:
+    """Direito ao esquecimento (LGPD): apaga TODAS as conversas do usuário.
+
+    As perguntas registradas (analytics) são anônimas — não têm vínculo com o
+    usuário — então nada nelas identifica quem perguntou para apagar aqui.
+    """
+    if not request.user.is_authenticated:
+        return Response({"detail": "Autenticação necessária."}, status=401)
+    apagadas, _ = Conversa.objects.filter(user=request.user).delete()
+    return Response({"apagadas": apagadas})
+
+
 @api_view(["GET", "PATCH", "DELETE"])
 def detalhe(request: Request, pk: int) -> Response:
     """Mensagens de uma conversa; renomear (PATCH); apagar (DELETE)."""
