@@ -89,9 +89,17 @@ def _system_resposta(recuperacao: Recuperacao) -> str:
     )
 
 
+def _baixa_confianca(recuperacao: Recuperacao) -> bool:
+    """Sinaliza caso de maior risco de alucinação: on-topic, mas o RAG não trouxe
+    NENHUMA fonte citável (norma/jurisprudência) para ancorar a resposta. Aí vale
+    escalar para o modelo forte (Opus) — decisão do §13 antes só existia no código
+    do router, sem gatilho real."""
+    return not recuperacao.fontes_citaveis
+
+
 def gerar_resposta(pergunta: str, recuperacao: Recuperacao) -> str:
     """Redige a resposta ancorada no contexto recuperado (§4)."""
-    modelo = escolher_modelo(Tarefa.RESPONDER)
+    modelo = escolher_modelo(Tarefa.RESPONDER, baixa_confianca=_baixa_confianca(recuperacao))
     mensagens = [{"role": "user", "content": pergunta}]
     resp = client.completar(modelo, _system_resposta(recuperacao), mensagens)
     budget.registrar_uso(modelo, Tarefa.RESPONDER, resp.tokens_entrada, resp.tokens_saida)
@@ -157,14 +165,20 @@ def responder_pergunta_stream(pergunta: str):
     recuperacao = buscar(vetor, assunto=cls.assunto)
     yield {"tipo": "meta", "on_topic": True, "assunto": cls.assunto}
 
-    modelo = escolher_modelo(Tarefa.RESPONDER)
+    modelo = escolher_modelo(Tarefa.RESPONDER, baixa_confianca=_baixa_confianca(recuperacao))
     uso: dict = {}
-    for delta in client.completar_stream(
-        modelo, _system_resposta(recuperacao), [{"role": "user", "content": pergunta}], uso=uso
-    ):
-        yield {"tipo": "delta", "texto": delta}
-    if uso:
-        budget.registrar_uso(modelo, Tarefa.RESPONDER, uso.get("entrada", 0), uso.get("saida", 0))
-
-    yield {"tipo": "fim", "fontes": recuperacao.fontes_citaveis, "disclaimer": DISCLAIMER}
-    capturar_seguro(pergunta, assunto=cls.assunto, vetor=vetor, on_topic=True)
+    try:
+        for delta in client.completar_stream(
+            modelo, _system_resposta(recuperacao), [{"role": "user", "content": pergunta}], uso=uso
+        ):
+            yield {"tipo": "delta", "texto": delta}
+        yield {"tipo": "fim", "fontes": recuperacao.fontes_citaveis, "disclaimer": DISCLAIMER}
+        capturar_seguro(pergunta, assunto=cls.assunto, vetor=vetor, on_topic=True)
+    finally:
+        # finally garante o registro do consumo mesmo se o cliente desconectar
+        # (GeneratorExit) ou algo após o loop falhar — desde que o stream tenha
+        # concluído e preenchido `uso`.
+        if uso:
+            budget.registrar_uso(
+                modelo, Tarefa.RESPONDER, uso.get("entrada", 0), uso.get("saida", 0)
+            )

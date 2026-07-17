@@ -99,6 +99,33 @@ def test_view_perguntar_on_topic(monkeypatch) -> None:
     assert resp.data["assunto"] == "direito"
 
 
+# ------------------------------------------------- escalonamento (baixa confiança)
+def test_baixa_confianca_sem_fontes_citaveis() -> None:
+    norma = Documento(titulo="Lei", tipo=TipoFonte.NORMA, assunto=Assunto.DIREITO)
+    assert services._baixa_confianca(Recuperacao(contexto=[], fontes_citaveis=[])) is True
+    assert services._baixa_confianca(Recuperacao(contexto=[], fontes_citaveis=[norma])) is False
+
+
+def test_gerar_resposta_escala_para_opus_sem_fontes(monkeypatch) -> None:
+    """Sem fonte citável, a redação deve pedir o modelo forte (baixa_confianca=True)."""
+    capturado = {}
+
+    def fake_escolher(tarefa, *, baixa_confianca=False):
+        capturado["baixa_confianca"] = baixa_confianca
+        return "claude-opus-4-8"
+
+    monkeypatch.setattr(services, "escolher_modelo", fake_escolher)
+    monkeypatch.setattr(
+        services.client,
+        "completar",
+        lambda *a, **k: client.Resposta("ok", "claude-opus-4-8", 1, 1, "end_turn"),
+    )
+    monkeypatch.setattr(services.budget, "registrar_uso", lambda *a, **k: None)
+
+    services.gerar_resposta("pergunta difícil", Recuperacao(contexto=[], fontes_citaveis=[]))
+    assert capturado["baixa_confianca"] is True
+
+
 # ------------------------------------------------- portões de custo/abuso
 @override_settings(RATE_LIMIT_PERGUNTAS_POR_MIN=1)
 def test_view_perguntar_rate_limit_retorna_429(monkeypatch) -> None:
