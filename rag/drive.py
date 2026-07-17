@@ -17,6 +17,7 @@ from django.conf import settings
 _SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 _MIME_PASTA = "application/vnd.google-apps.folder"
 _MIME_GDOC = "application/vnd.google-apps.document"
+_MIME_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
 
 # --------------------------------------------------------------- classificação
@@ -59,15 +60,29 @@ def texto_de_pdf(dados: bytes) -> str:
     return "\n".join((pag.extract_text() or "") for pag in leitor.pages)
 
 
+def texto_de_docx(dados: bytes) -> str:
+    """Texto de um .docx (Word): parágrafos + células de tabela."""
+    from docx import Document  # python-docx
+
+    doc = Document(io.BytesIO(dados))
+    partes = [p.text for p in doc.paragraphs]
+    for tabela in doc.tables:
+        for linha in tabela.rows:
+            partes.extend(cel.text for cel in linha.cells)
+    return "\n".join(p for p in partes if p.strip())
+
+
 def extrair_texto(arquivo: dict, dados: bytes) -> str:
-    """Texto direto de txt/markdown/Google Docs (sem OCR). PDF: camada nativa."""
+    """Texto direto de txt/markdown/Google Docs/.docx (sem OCR). PDF: camada nativa."""
     nome = (arquivo.get("name") or "").lower()
     mime = arquivo.get("mimeType") or ""
     if mime == _MIME_GDOC or nome.endswith((".txt", ".md")):
         return dados.decode("utf-8", errors="ignore")
+    if mime == _MIME_DOCX or nome.endswith(".docx"):
+        return texto_de_docx(dados)
     if mime == "application/pdf" or nome.endswith(".pdf"):
         return texto_de_pdf(dados)
-    return ""  # formato não suportado (ex.: .docx) — ignora por ora
+    return ""  # formato ainda não suportado (ex.: .doc antigo, .rtf) — ignora
 
 
 def ocr_disponivel() -> bool:
@@ -76,22 +91,37 @@ def ocr_disponivel() -> bool:
 
 
 def ocr_pdf(
-    dados: bytes, *, lang: str = "por", dpi: int = 300, lote: int = 5, progresso=None
+    dados: bytes,
+    *,
+    lang: str = "por",
+    dpi: int = 300,
+    lote: int = 5,
+    progresso=None,
+    inicio: int = 0,
+    texto_inicial: str = "",
+    ao_lote=None,
 ) -> str:
     """OCR de um PDF escaneado → texto. Requer tesseract+poppler no sistema.
 
     Renderiza em lotes pequenos (memória previsível) e chama `progresso(feito,
     total)` a cada lote, para o acompanhamento ao vivo em livros longos.
+
+    **Retomável:** começa em `inicio` páginas já feitas, acumulando sobre
+    `texto_inicial`; a cada lote chama `ao_lote(texto_ate_agora, paginas_feitas)`
+    para persistir o parcial. Assim uma queda no meio não perde o OCR — a próxima
+    execução continua da última página salva. Defaults reproduzem o antigo (do 0).
     """
     import pytesseract
     from pdf2image import convert_from_bytes, pdfinfo_from_bytes
 
     total = int(pdfinfo_from_bytes(dados)["Pages"])
-    partes: list[str] = []
-    for ini in range(1, total + 1, lote):
+    partes: list[str] = [texto_inicial] if texto_inicial else []
+    for ini in range(inicio + 1, total + 1, lote):
         fim = min(ini + lote - 1, total)
         for img in convert_from_bytes(dados, dpi=dpi, first_page=ini, last_page=fim):
             partes.append(pytesseract.image_to_string(img, lang=lang))
+        if ao_lote:
+            ao_lote("\n".join(partes), fim)  # persiste o parcial (retomável)
         if progresso:
             progresso(fim, total)
     return "\n".join(partes)

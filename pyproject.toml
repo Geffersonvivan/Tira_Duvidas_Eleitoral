@@ -19,6 +19,7 @@ dependencies = [
     "pgvector>=0.3",             # embeddings/RAG no Postgres
     "pillow>=11.0",              # leitura/validação de imagem (Serviço 2)
     "pypdf>=5.0",                # extração de página/imagem de PDF
+    "python-docx>=1.1",          # extração de texto de .docx (ingestão do RAG)
     "python-dotenv>=1.0",        # variáveis de ambiente
     "gunicorn>=23.0",            # servidor de produção
     "whitenoise>=6.7",           # servir estáticos em produção

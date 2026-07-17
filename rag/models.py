@@ -68,6 +68,12 @@ class Documento(models.Model):
     #: Cache do texto extraído (OCR/nativo). Guardado para NUNCA re-OCRar: se o
     #: `conteudo_hash` não mudou, reindexa a partir daqui, sem baixar/OCR de novo.
     texto_extraido = models.TextField(blank=True, default="")
+    #: OCR retomável: nº de páginas já OCRadas e persistidas em `texto_extraido`,
+    #: e se o OCR terminou. Deixam um scan longo (que caiu no meio) continuar de
+    #: onde parou, em vez de recomeçar. `ocr_completo=True` por padrão cobre docs
+    #: sem OCR (texto nativo/manifesto).
+    ocr_paginas = models.PositiveIntegerField(default=0)
+    ocr_completo = models.BooleanField(default=True)
 
     criado_em = models.DateTimeField(auto_now_add=True)
 
