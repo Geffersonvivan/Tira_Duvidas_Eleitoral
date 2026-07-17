@@ -42,6 +42,10 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    # HttpOnly no cookie de sessão (default do Django, explícito aqui). O cookie
+    # CSRF fica legível de propósito — o frontend lê o token para o header nas
+    # chamadas AJAX; torná-lo HttpOnly quebraria o envio do X-CSRFToken.
+    SESSION_COOKIE_HTTPONLY = True
     # HSTS — o site é servido só por HTTPS (Railway + redirect acima).
     # Configurável; 0 desliga. includeSubDomains/preload são opt-in (cuidado).
     SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_HSTS_SECONDS", "31536000"))
@@ -92,10 +96,34 @@ CLERK_WEBHOOK_SECRET = os.environ.get("CLERK_WEBHOOK_SECRET", "")
 CLERK_ENABLED = bool(CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY)
 LOGIN_URL = "/"
 
+# --- Limites de uso (custo/abuso) -------------------------------------
+# Teto de requisições por minuto, por usuário (ou IP no público), nos
+# endpoints que chamam LLM. 0 desliga. Ver core/ratelimit.py (por worker
+# com o cache padrão; Redis fecha o teto global — OPERACAO.md).
+RATE_LIMIT_PERGUNTAS_POR_MIN = int(os.environ.get("RATE_LIMIT_PERGUNTAS_POR_MIN", "20"))
+RATE_LIMIT_MATERIAIS_POR_MIN = int(os.environ.get("RATE_LIMIT_MATERIAIS_POR_MIN", "8"))
+
 # --- Analytics de perguntas -------------------------------------------
 # Limiar de distância de cosseno para agrupar perguntas de sentido próximo
 # (0 = idêntico). ~0.12 corresponde a similaridade ~0.88. Calibrar com dados.
 ANALYTICS_LIMIAR_DISTANCIA = float(os.environ.get("ANALYTICS_LIMIAR_DISTANCIA", "0.12"))
+
+# --- RAG · recuperação -------------------------------------------------
+# Distância de cosseno máxima aceita num trecho recuperado (0 = idêntico,
+# 2 = oposto). Acima disso o trecho é descartado por irrelevância, evitando
+# alimentar o LLM com contexto fraco. Vazio = desligado (sem corte) — calibrar
+# com o golden set antes de ativar (um valor muito baixo derruba contexto útil).
+_rag_dist = os.environ.get("RAG_DISTANCIA_MAX", "").strip()
+RAG_DISTANCIA_MAX = float(_rag_dist) if _rag_dist else None
+
+# --- LGPD · retenção de dados -----------------------------------------
+# Expurgo executado pelo comando `expurgar_dados` (agende no cron/Railway).
+# 0 = desligado (nada é apagado por idade). Defina os prazos conforme a
+# política de privacidade antes de ativar. Perguntas registradas são anônimas
+# (sem vínculo com usuário); conversas são por usuário e também exclusíveis
+# sob demanda (direito ao esquecimento) via API.
+LGPD_RETENCAO_PERGUNTAS_DIAS = int(os.environ.get("LGPD_RETENCAO_PERGUNTAS_DIAS", "0"))
+LGPD_RETENCAO_CONVERSAS_DIAS = int(os.environ.get("LGPD_RETENCAO_CONVERSAS_DIAS", "0"))
 
 # --- RAG · ingestão do Google Drive (fonte viva) ----------------------
 # A pasta "RAG" no Drive é compartilhada (leitura) com uma conta de serviço.
@@ -225,3 +253,21 @@ LOGGING = {
         "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False},
     },
 }
+
+# --- Observabilidade (Sentry) -----------------------------------------
+# Ativo só com SENTRY_DSN definido e fora do DEBUG. send_default_pii=False por
+# LGPD (não envia corpo de request, e-mail nem a pergunta). traces_sample_rate
+# controla o APM (0 = só erros, para não gerar custo/volume).
+SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
+if SENTRY_DSN and not DEBUG:
+    try:
+        import sentry_sdk
+
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            traces_sample_rate=float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0")),
+            send_default_pii=False,
+            environment=os.environ.get("RAILWAY_ENVIRONMENT_NAME", "production"),
+        )
+    except ImportError:  # sentry-sdk não instalado neste ambiente — segue sem APM
+        pass

@@ -170,7 +170,8 @@ def _parse_parecer(texto_json: str, fontes: list[Documento]) -> Parecer:
 
 def avaliar_conformidade(texto: str, recuperacao: Recuperacao) -> Parecer:
     """Confronta a peça contra as regras do RAG e emite o parecer (§7)."""
-    modelo = escolher_modelo(Tarefa.RESPONDER)
+    # Sem fonte citável para ancorar o parecer → escala p/ o modelo forte (§13).
+    modelo = escolher_modelo(Tarefa.RESPONDER, baixa_confianca=not recuperacao.fontes_citaveis)
     contexto = "\n\n".join(t.conteudo for t in recuperacao.contexto)
     system = (
         "Você audita peças gráficas eleitorais contra a legislação. Use SOMENTE o "

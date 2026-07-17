@@ -1,8 +1,11 @@
 """Testes do Serviço 1 — pipeline de perguntas, sem tocar API/RAG."""
 
+from django.core.cache import cache
+from django.test import override_settings
 from rest_framework.test import APIClient
 
 from llm import budget, client
+from llm.client import LLMIndisponivel
 from perguntas import services
 from perguntas.services import Classificacao, RespostaPergunta, responder_pergunta
 from rag.models import Assunto, Documento, TipoFonte
@@ -94,3 +97,62 @@ def test_view_perguntar_on_topic(monkeypatch) -> None:
     assert resp.status_code == 200
     assert resp.data["texto"] == "ok"
     assert resp.data["assunto"] == "direito"
+
+
+# ------------------------------------------------- escalonamento (baixa confiança)
+def test_baixa_confianca_sem_fontes_citaveis() -> None:
+    norma = Documento(titulo="Lei", tipo=TipoFonte.NORMA, assunto=Assunto.DIREITO)
+    assert services._baixa_confianca(Recuperacao(contexto=[], fontes_citaveis=[])) is True
+    assert services._baixa_confianca(Recuperacao(contexto=[], fontes_citaveis=[norma])) is False
+
+
+def test_gerar_resposta_escala_para_opus_sem_fontes(monkeypatch) -> None:
+    """Sem fonte citável, a redação deve pedir o modelo forte (baixa_confianca=True)."""
+    capturado = {}
+
+    def fake_escolher(tarefa, *, baixa_confianca=False):
+        capturado["baixa_confianca"] = baixa_confianca
+        return "claude-opus-4-8"
+
+    monkeypatch.setattr(services, "escolher_modelo", fake_escolher)
+    monkeypatch.setattr(
+        services.client,
+        "completar",
+        lambda *a, **k: client.Resposta("ok", "claude-opus-4-8", 1, 1, "end_turn"),
+    )
+    monkeypatch.setattr(services.budget, "registrar_uso", lambda *a, **k: None)
+
+    services.gerar_resposta("pergunta difícil", Recuperacao(contexto=[], fontes_citaveis=[]))
+    assert capturado["baixa_confianca"] is True
+
+
+# ------------------------------------------------- portões de custo/abuso
+@override_settings(RATE_LIMIT_PERGUNTAS_POR_MIN=1)
+def test_view_perguntar_rate_limit_retorna_429(monkeypatch) -> None:
+    cache.clear()
+    monkeypatch.setattr(
+        services, "responder_pergunta", lambda _p: RespostaPergunta(on_topic=True, texto="ok")
+    )
+    cli = APIClient()
+    r1 = cli.post("/api/perguntas/perguntar/", {"pergunta": "x"}, format="json")
+    r2 = cli.post("/api/perguntas/perguntar/", {"pergunta": "x"}, format="json")
+    assert r1.status_code == 200
+    assert r2.status_code == 429
+
+
+def test_view_perguntar_orcamento_estourado_retorna_503(monkeypatch) -> None:
+    cache.clear()
+    monkeypatch.setattr(budget, "dentro_do_orcamento", lambda *a, **k: False)
+    resp = APIClient().post("/api/perguntas/perguntar/", {"pergunta": "x"}, format="json")
+    assert resp.status_code == 503
+
+
+def test_view_perguntar_llm_indisponivel_retorna_503(monkeypatch) -> None:
+    cache.clear()
+
+    def boom(_p):
+        raise LLMIndisponivel("provedor fora")
+
+    monkeypatch.setattr(services, "responder_pergunta", boom)
+    resp = APIClient().post("/api/perguntas/perguntar/", {"pergunta": "x"}, format="json")
+    assert resp.status_code == 503

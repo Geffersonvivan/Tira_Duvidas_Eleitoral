@@ -4,14 +4,26 @@ A imagem NÃO é retida após o parecer (LGPD, lógica.md §11.1): os bytes fica
 em memória durante a análise.
 """
 
+import logging
+
+from django.conf import settings
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from core import ratelimit
 from core.auth import autorizado
+from llm import budget
+from llm.client import LLMIndisponivel
 from materiais import services
 from materiais.serializers import AnaliseInputSerializer, FonteSerializer
+
+logger = logging.getLogger(__name__)
+
+MSG_RATE_LIMIT = "Muitas análises em pouco tempo. Aguarde um instante e tente de novo."
+MSG_ORCAMENTO = "O serviço atingiu o limite de uso do período. Tente novamente mais tarde."
+MSG_INDISPONIVEL = "O analisador está temporariamente indisponível. Tente novamente em instantes."
 
 
 def _serializar(resultado: services.ResultadoAnalise) -> dict:
@@ -38,11 +50,22 @@ def analisar(request: Request) -> Response:
     if not autorizado(request):
         return Response({"detail": "Autenticação necessária."}, status=401)
 
+    if ratelimit.limite_excedido(
+        request, escopo="materiais", limite=settings.RATE_LIMIT_MATERIAIS_POR_MIN
+    ):
+        return Response({"detail": MSG_RATE_LIMIT}, status=429)
+    if not budget.dentro_do_orcamento():
+        return Response({"detail": MSG_ORCAMENTO}, status=503)
+
     entrada = AnaliseInputSerializer(data=request.data)
     entrada.is_valid(raise_exception=True)
 
     pecas = [
         (f.name, f.read(), services.media_type(f.name)) for f in entrada.validated_data["arquivos"]
     ]
-    resultados = services.analisar_lote(pecas)
+    try:
+        resultados = services.analisar_lote(pecas)
+    except LLMIndisponivel:
+        logger.warning("LLM indisponível ao analisar material")
+        return Response({"detail": MSG_INDISPONIVEL}, status=503)
     return Response({"resultados": [_serializar(r) for r in resultados]})

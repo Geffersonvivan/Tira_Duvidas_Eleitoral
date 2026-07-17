@@ -3,17 +3,36 @@
 import json
 import logging
 
+from django.conf import settings
 from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.http import require_POST
 from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from core import ratelimit
 from core.auth import autorizado
+from llm import budget
+from llm.client import LLMIndisponivel
 from perguntas import services
 from perguntas.serializers import FonteSerializer, PerguntaInputSerializer
 
 logger = logging.getLogger(__name__)
+
+MSG_RATE_LIMIT = "Muitas perguntas em pouco tempo. Aguarde um instante e tente de novo."
+MSG_ORCAMENTO = "O serviço atingiu o limite de uso do período. Tente novamente mais tarde."
+MSG_INDISPONIVEL = "O assistente está temporariamente indisponível. Tente novamente em instantes."
+
+
+def _bloqueio_de_uso(request):
+    """Portões de custo/abuso comuns aos dois endpoints. Retorna (motivo, status) ou None."""
+    if ratelimit.limite_excedido(
+        request, escopo="perguntas", limite=settings.RATE_LIMIT_PERGUNTAS_POR_MIN
+    ):
+        return MSG_RATE_LIMIT, 429
+    if not budget.dentro_do_orcamento():
+        return MSG_ORCAMENTO, 503
+    return None
 
 
 @api_view(["POST"])
@@ -21,10 +40,18 @@ def perguntar(request: Request) -> Response:
     if not autorizado(request):
         return Response({"detail": "Autenticação necessária."}, status=401)
 
+    bloqueio = _bloqueio_de_uso(request)
+    if bloqueio:
+        return Response({"detail": bloqueio[0]}, status=bloqueio[1])
+
     entrada = PerguntaInputSerializer(data=request.data)
     entrada.is_valid(raise_exception=True)
 
-    resultado = services.responder_pergunta(entrada.validated_data["pergunta"])
+    try:
+        resultado = services.responder_pergunta(entrada.validated_data["pergunta"])
+    except LLMIndisponivel:
+        logger.warning("LLM indisponível ao responder pergunta")
+        return Response({"detail": MSG_INDISPONIVEL}, status=503)
 
     return Response(
         {
@@ -45,6 +72,11 @@ def perguntar_stream(request):
     ciclo do DRF. Auth via `autorizado`; CSRF pelo middleware padrão do Django."""
     if not autorizado(request):
         return JsonResponse({"detail": "Autenticação necessária."}, status=401)
+
+    bloqueio = _bloqueio_de_uso(request)
+    if bloqueio:
+        return JsonResponse({"detail": bloqueio[0]}, status=bloqueio[1])
+
     try:
         corpo = json.loads(request.body)
         pergunta = (corpo.get("pergunta") or "").strip()
@@ -91,6 +123,9 @@ def perguntar_stream(request):
                 from conversas.services import salvar_mensagem
 
                 salvar_mensagem(conversa, Mensagem.Papel.ASSISTENTE, "".join(partes), **meta)
+        except LLMIndisponivel:
+            logger.warning("LLM indisponível no stream de perguntas")
+            yield json.dumps({"tipo": "erro", "texto": MSG_INDISPONIVEL}) + "\n"
         except Exception:
             logger.exception("Erro no stream de perguntas")
             erro = {"tipo": "erro", "texto": "Erro ao consultar. Tente novamente."}

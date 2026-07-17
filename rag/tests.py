@@ -1,10 +1,12 @@
 """Testes do RAG: a regra de citação inviolável (lógica.md §1)."""
 
+from datetime import date, timedelta
+
 import pytest
 from django.core.exceptions import ValidationError
 
 from rag.models import Assunto, Documento, TipoFonte, Trecho
-from rag.retriever import separar_por_citabilidade
+from rag.retriever import filtrar_vigentes, separar_por_citabilidade
 
 
 def _doc(tipo: str, *, citavel: bool = False, vigente: bool = True) -> Documento:
@@ -76,3 +78,64 @@ def test_separar_por_citabilidade_so_retorna_fontes_validas() -> None:
     assert len(rec.contexto) == 3
     tipos_citaveis = {d.tipo for d in rec.fontes_citaveis}
     assert tipos_citaveis == {TipoFonte.NORMA, TipoFonte.JURISPRUDENCIA}
+
+
+# ------------------------------------------------------- filtro de vigência
+def _trecho(doc: Documento) -> Trecho:
+    return Trecho.objects.create(documento=doc, ordem=0, conteudo="texto")
+
+
+@pytest.mark.django_db
+def test_filtrar_vigentes_exclui_documento_revogado() -> None:
+    _trecho(_doc(TipoFonte.NORMA, citavel=True, vigente=False))  # revogado
+    vigente = _trecho(_doc(TipoFonte.NORMA, citavel=True))
+
+    restantes = list(filtrar_vigentes(Trecho.objects.all()))
+
+    assert restantes == [vigente]
+
+
+@pytest.mark.django_db
+def test_filtrar_vigentes_exclui_documento_expirado() -> None:
+    ontem = date.today() - timedelta(days=1)
+    expirado = _doc(TipoFonte.NORMA, citavel=True)
+    expirado.vigencia_fim = ontem
+    expirado.save()
+    _trecho(expirado)
+    atual = _trecho(_doc(TipoFonte.NORMA, citavel=True))  # sem data-limite
+
+    restantes = list(filtrar_vigentes(Trecho.objects.all()))
+
+    assert restantes == [atual]
+
+
+@pytest.mark.django_db
+def test_filtrar_vigentes_exclui_nao_iniciado() -> None:
+    amanha = date.today() + timedelta(days=1)
+    futuro = _doc(TipoFonte.NORMA, citavel=True)
+    futuro.vigencia_inicio = amanha  # ainda não entrou em vigor
+    futuro.save()
+    _trecho(futuro)
+    atual = _trecho(_doc(TipoFonte.NORMA, citavel=True))
+
+    restantes = list(filtrar_vigentes(Trecho.objects.all()))
+
+    assert restantes == [atual]
+
+
+@pytest.mark.django_db
+def test_filtrar_vigentes_mantem_doutrina_valida() -> None:
+    """Doutrina/curso (não citáveis, mas vigentes) seguem no contexto."""
+    doutrina = _trecho(_doc(TipoFonte.DOUTRINA))
+    restantes = list(filtrar_vigentes(Trecho.objects.all()))
+    assert restantes == [doutrina]
+
+
+# --------------------------------------------------- golden set (recall@k)
+def test_recall_do_caso_conta_por_substring() -> None:
+    from rag.golden import recall_do_caso
+
+    titulos = ["Lei 9.504/97 (Lei das Eleições)", "Resolução TSE 23.610"]
+    assert recall_do_caso(titulos, ["9.504"]) == 1.0
+    assert recall_do_caso(titulos, ["9.504", "inexistente"]) == 0.5
+    assert recall_do_caso(titulos, []) == 1.0  # sem esperadas → trivialmente 100%

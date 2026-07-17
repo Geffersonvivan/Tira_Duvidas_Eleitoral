@@ -11,6 +11,8 @@ pypdf>=5.0
 python-dotenv>=1.0
 gunicorn>=23.0
 whitenoise>=6.7
+# Observabilidade — ativo só quando SENTRY_DSN está definido (config/settings.py).
+sentry-sdk>=2.0
 
 # --- Auth (Clerk) — mesmos pisos de segurança do PJARI (pip-audit) ---
 # PyJWT valida o JWT do Clerk em core/middleware.py; svix verifica a

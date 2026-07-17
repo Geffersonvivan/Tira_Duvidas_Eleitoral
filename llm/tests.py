@@ -108,3 +108,65 @@ def test_completar_refusal_retorna_texto_vazio(monkeypatch) -> None:
     r = client.completar("claude-sonnet-4-6", "sys", [{"role": "user", "content": "x"}])
     assert r.texto == ""
     assert r.stop_reason == "refusal"
+
+
+# ----------------------------------------------------------- resiliência do client
+def _fake_com_create(create):
+    return SimpleNamespace(messages=SimpleNamespace(create=create))
+
+
+def test_completar_repete_em_erro_transitorio(monkeypatch) -> None:
+    import httpx
+    from anthropic import APITimeoutError
+
+    req = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    chamadas = {"n": 0}
+
+    def create(**kw):
+        chamadas["n"] += 1
+        if chamadas["n"] < 3:
+            raise APITimeoutError(request=req)  # transitório: deve repetir
+        return _fake_resposta("end_turn", "ok após retry")
+
+    monkeypatch.setattr(client, "_get_cliente", lambda: _fake_com_create(create))
+    monkeypatch.setattr(client.time, "sleep", lambda *_a: None)  # sem esperar de verdade
+
+    r = client.completar("claude-sonnet-4-6", "sys", [{"role": "user", "content": "oi"}])
+    assert r.texto == "ok após retry"
+    assert chamadas["n"] == 3
+
+
+def test_completar_esgota_tentativas_levanta_indisponivel(monkeypatch) -> None:
+    import httpx
+    from anthropic import APITimeoutError
+
+    req = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+
+    def create(**kw):
+        raise APITimeoutError(request=req)
+
+    monkeypatch.setattr(client, "_get_cliente", lambda: _fake_com_create(create))
+    monkeypatch.setattr(client.time, "sleep", lambda *_a: None)
+
+    with pytest.raises(client.LLMIndisponivel):
+        client.completar("claude-sonnet-4-6", "sys", [{"role": "user", "content": "x"}])
+
+
+def test_completar_badrequest_propaga_sem_retry(monkeypatch) -> None:
+    """BadRequestError (imagem ilegível) NÃO vira LLMIndisponivel — Serviço 2 trata."""
+    import httpx
+    from anthropic import BadRequestError
+
+    req = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    resp = httpx.Response(400, request=req)
+    chamadas = {"n": 0}
+
+    def create(**kw):
+        chamadas["n"] += 1
+        raise BadRequestError("imagem ilegível", response=resp, body=None)
+
+    monkeypatch.setattr(client, "_get_cliente", lambda: _fake_com_create(create))
+
+    with pytest.raises(BadRequestError):
+        client.completar("claude-sonnet-4-6", "sys", [{"role": "user", "content": "x"}])
+    assert chamadas["n"] == 1  # sem retry
