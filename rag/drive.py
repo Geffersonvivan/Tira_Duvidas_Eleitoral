@@ -91,22 +91,37 @@ def ocr_disponivel() -> bool:
 
 
 def ocr_pdf(
-    dados: bytes, *, lang: str = "por", dpi: int = 300, lote: int = 5, progresso=None
+    dados: bytes,
+    *,
+    lang: str = "por",
+    dpi: int = 300,
+    lote: int = 5,
+    progresso=None,
+    inicio: int = 0,
+    texto_inicial: str = "",
+    ao_lote=None,
 ) -> str:
     """OCR de um PDF escaneado → texto. Requer tesseract+poppler no sistema.
 
     Renderiza em lotes pequenos (memória previsível) e chama `progresso(feito,
     total)` a cada lote, para o acompanhamento ao vivo em livros longos.
+
+    **Retomável:** começa em `inicio` páginas já feitas, acumulando sobre
+    `texto_inicial`; a cada lote chama `ao_lote(texto_ate_agora, paginas_feitas)`
+    para persistir o parcial. Assim uma queda no meio não perde o OCR — a próxima
+    execução continua da última página salva. Defaults reproduzem o antigo (do 0).
     """
     import pytesseract
     from pdf2image import convert_from_bytes, pdfinfo_from_bytes
 
     total = int(pdfinfo_from_bytes(dados)["Pages"])
-    partes: list[str] = []
-    for ini in range(1, total + 1, lote):
+    partes: list[str] = [texto_inicial] if texto_inicial else []
+    for ini in range(inicio + 1, total + 1, lote):
         fim = min(ini + lote - 1, total)
         for img in convert_from_bytes(dados, dpi=dpi, first_page=ini, last_page=fim):
             partes.append(pytesseract.image_to_string(img, lang=lang))
+        if ao_lote:
+            ao_lote("\n".join(partes), fim)  # persiste o parcial (retomável)
         if progresso:
             progresso(fim, total)
     return "\n".join(partes)

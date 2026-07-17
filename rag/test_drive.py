@@ -172,6 +172,79 @@ def test_reindexa_do_cache_sem_reocr(monkeypatch, settings) -> None:
     assert embutidos == ["TEXTO EM CACHE"]
 
 
+# ------------------------------------------------------- OCR retomável
+@pytest.mark.django_db
+def test_ocr_parcial_salvo_e_retomado(monkeypatch, settings) -> None:
+    """OCR que cai no meio salva o parcial; o próximo run retoma de onde parou."""
+    settings.GOOGLE_SERVICE_ACCOUNT_JSON = '{"fake": true}'
+    settings.RAG_DRIVE_ASSUNTO_MAP = MAPA
+    arq = [(_pdf("f1", "scan.pdf", "aaa"), ("Contábil", "Livro - Doutrina"))]
+
+    # 1ª rodada: OCRa 1 lote (salva parcial via ao_lote) e depois "cai".
+    def ocr_cai(dados, *, inicio=0, texto_inicial="", ao_lote=None, progresso=None, **k):
+        ao_lote("parcial até pág 5", 5)  # persiste o parcial
+        raise RuntimeError("queda no meio do OCR")
+
+    _mock(monkeypatch, arq, texto_pdf=lambda d: "")
+    monkeypatch.setattr(drive, "ocr_pdf", ocr_cai)
+    call_command("ingerir_drive")  # try/except no comando: não deve levantar
+
+    d = Documento.objects.get(origem_id="f1")
+    assert d.ocr_paginas == 5
+    assert d.texto_extraido == "parcial até pág 5"
+    assert d.ocr_completo is False
+    assert d.trechos.count() == 0  # não embeda parcial
+
+    # 2ª rodada: retoma na pág 5, com o texto parcial, e conclui.
+    recebido = {}
+
+    def ocr_conclui(dados, *, inicio=0, texto_inicial="", ao_lote=None, progresso=None, **k):
+        recebido["inicio"], recebido["texto_inicial"] = inicio, texto_inicial
+        return texto_inicial + " + resto"
+
+    _mock(monkeypatch, arq, texto_pdf=lambda d: "", ingerir=lambda doc, t, **k: [1])
+    monkeypatch.setattr(drive, "ocr_pdf", ocr_conclui)
+    call_command("ingerir_drive")
+
+    assert recebido == {"inicio": 5, "texto_inicial": "parcial até pág 5"}
+    d.refresh_from_db()
+    assert d.ocr_completo is True
+    assert d.ocr_paginas == 5  # não regrediu
+
+
+def test_ocr_pdf_retomavel_pula_paginas_ja_feitas(monkeypatch) -> None:
+    """Unidade: ocr_pdf com inicio>0 só renderiza da página seguinte e acumula."""
+    paginas_renderizadas = []
+
+    class _Img:
+        pass
+
+    def fake_convert(dados, *, dpi, first_page, last_page):
+        paginas_renderizadas.extend(range(first_page, last_page + 1))
+        return [_Img() for _ in range(first_page, last_page + 1)]
+
+    monkeypatch.setattr(drive, "pdfinfo_from_bytes", lambda d: {"Pages": 6}, raising=False)
+    import sys
+    import types
+
+    # injeta módulos fake para os imports internos de ocr_pdf
+    fake_pdf2image = types.SimpleNamespace(
+        convert_from_bytes=fake_convert, pdfinfo_from_bytes=lambda d: {"Pages": 6}
+    )
+    fake_pytesseract = types.SimpleNamespace(image_to_string=lambda img, lang: "pg")
+    monkeypatch.setitem(sys.modules, "pdf2image", fake_pdf2image)
+    monkeypatch.setitem(sys.modules, "pytesseract", fake_pytesseract)
+
+    salvos = []
+    texto = drive.ocr_pdf(
+        b"x", inicio=4, texto_inicial="ANTES", lote=5, ao_lote=lambda t, n: salvos.append((t, n))
+    )
+    # começou na pág 5 (pulou 1-4); acumulou sobre "ANTES".
+    assert paginas_renderizadas == [5, 6]
+    assert texto.startswith("ANTES")
+    assert salvos[-1][1] == 6  # última página salva
+
+
 # ---------------------------------------------- resiliência e 0 trechos
 @pytest.mark.django_db
 def test_falha_de_embedding_nao_aborta_lote(monkeypatch, settings) -> None:

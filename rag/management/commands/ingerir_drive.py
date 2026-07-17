@@ -18,7 +18,6 @@ Uso:
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from django.db import connection
 
 from rag import drive, ingest
 from rag.models import TIPOS_CITAVEIS, Assunto, Documento
@@ -43,6 +42,39 @@ class Command(BaseCommand):
             help="Só reprocessa docs já existentes que ficaram com 0 trechos "
             "(reembeda do cache, sem re-baixar/OCR). Ideal p/ retomar após falha de cota.",
         )
+
+    def _upsert_doc(
+        self,
+        arquivo,
+        titulo,
+        tipo,
+        assunto,
+        subtema,
+        token,
+        texto,
+        *,
+        ocr_paginas=0,
+        ocr_completo=True,
+    ) -> Documento:
+        """Upsert idempotente do Documento do Drive (metadados + estado do texto/OCR)."""
+        doc, _ = Documento.objects.update_or_create(
+            origem="drive",
+            origem_id=arquivo["id"],
+            defaults={
+                "titulo": titulo,
+                "tipo": tipo,
+                "assunto": assunto,
+                "citavel": tipo in TIPOS_CITAVEIS,
+                "vigente": True,
+                "fonte_url": f"https://drive.google.com/file/d/{arquivo['id']}/view",
+                "conteudo_hash": token,
+                "subtema": subtema,
+                "texto_extraido": texto,
+                "ocr_paginas": ocr_paginas,
+                "ocr_completo": ocr_completo,
+            },
+        )
+        return doc
 
     def handle(self, *args, **opts) -> None:
         folder_id = settings.RAG_DRIVE_ROOT_FOLDER_ID
@@ -99,31 +131,77 @@ class Command(BaseCommand):
                 self.stdout.write(f"  = {titulo} — sem mudança")
                 continue
 
-            # Obtém o texto: cache (md5 igual) → nativo → OCR.
-            if mesmo and anterior.texto_extraido:
-                texto = anterior.texto_extraido  # nunca re-OCRa
+            # Obtém o texto: cache OCR completo → nativo → OCR (retomável).
+            if mesmo and anterior.ocr_completo and anterior.texto_extraido:
+                texto = anterior.texto_extraido  # cache completo: nunca re-OCRa
+                doc = self._upsert_doc(arquivo, titulo, tipo, assunto, subtema, token, texto)
             else:
                 dados = drive.baixar_bytes(servico, arquivo)
                 if not eh_pdf:
                     texto = drive.extrair_texto(arquivo, dados)
+                    if not texto.strip():
+                        vazios += 1
+                        self.stderr.write(f"  ! sem texto: {titulo}")
+                        continue
+                    doc = self._upsert_doc(arquivo, titulo, tipo, assunto, subtema, token, texto)
                 else:
                     texto = drive.texto_de_pdf(dados)
-                    if not texto.strip():  # escaneado → OCR
+                    if texto.strip():  # PDF com camada de texto nativa
+                        doc = self._upsert_doc(
+                            arquivo, titulo, tipo, assunto, subtema, token, texto
+                        )
+                    else:  # escaneado → OCR retomável
                         if not drive.ocr_disponivel():
                             sem_ocr += 1
                             self.stderr.write(f"  ! scan sem OCR disponível: {titulo}")
                             continue
+                        # Retoma o OCR de onde parou, se houver parcial do mesmo arquivo.
+                        if mesmo and not anterior.ocr_completo and anterior.ocr_paginas:
+                            ini_pag, texto_ini = anterior.ocr_paginas, anterior.texto_extraido
+                            self.stdout.write(f"  ↻ retoma OCR de {titulo} na pág {ini_pag}")
+                        else:
+                            ini_pag, texto_ini = 0, ""
+                        doc = self._upsert_doc(
+                            arquivo,
+                            titulo,
+                            tipo,
+                            assunto,
+                            subtema,
+                            token,
+                            texto_ini,
+                            ocr_paginas=ini_pag,
+                            ocr_completo=False,
+                        )
 
                         def _prog(feito, total, _t=titulo):
                             self.stdout.write(
                                 f"    … OCR {_t[:38]}: {feito}/{total} págs", ending="\r"
                             )
 
-                        # OCR longo não deve segurar a conexão ociosa; fecha aqui
-                        # e o próximo acesso ao banco reconecta (keepalives cobrem
-                        # a fase de embedding). Evita "connection dropped" pós-OCR.
-                        connection.close()
-                        texto = drive.ocr_pdf(dados, progresso=_prog)
+                        def _salvar(t, n, _d=doc):  # persiste o parcial a cada lote
+                            _d.texto_extraido, _d.ocr_paginas = t, n
+                            _d.save(update_fields=["texto_extraido", "ocr_paginas"])
+
+                        try:
+                            texto = drive.ocr_pdf(
+                                dados,
+                                inicio=ini_pag,
+                                texto_inicial=texto_ini,
+                                ao_lote=_salvar,
+                                progresso=_prog,
+                            )
+                        except Exception as exc:
+                            # Erro de OCR (página corrompida, etc.): o parcial já está
+                            # salvo, então o próximo run retoma. Não aborta o lote.
+                            falhas += 1
+                            self.stdout.write("")
+                            self.stderr.write(
+                                f"  ✗ OCR interrompido em {titulo}: {exc} — "
+                                "parcial salvo (retomável)"
+                            )
+                            continue
+                        doc.texto_extraido, doc.ocr_completo = texto, True
+                        doc.save(update_fields=["texto_extraido", "ocr_completo"])
                         self.stdout.write("")
                         ocr_feitos += 1
 
@@ -132,21 +210,6 @@ class Command(BaseCommand):
                 self.stderr.write(f"  ! sem texto: {titulo}")
                 continue
 
-            doc, _ = Documento.objects.update_or_create(
-                origem="drive",
-                origem_id=arquivo["id"],
-                defaults={
-                    "titulo": titulo,
-                    "tipo": tipo,
-                    "assunto": assunto,
-                    "citavel": tipo in TIPOS_CITAVEIS,
-                    "vigente": True,
-                    "fonte_url": f"https://drive.google.com/file/d/{arquivo['id']}/view",
-                    "conteudo_hash": token,
-                    "subtema": subtema,
-                    "texto_extraido": texto,
-                },
-            )
             doc.trechos.all().delete()
             try:
                 trechos = ingest.ingerir(doc, texto)
