@@ -92,6 +92,13 @@ CLERK_WEBHOOK_SECRET = os.environ.get("CLERK_WEBHOOK_SECRET", "")
 CLERK_ENABLED = bool(CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY)
 LOGIN_URL = "/"
 
+# --- Limites de uso (custo/abuso) -------------------------------------
+# Teto de requisições por minuto, por usuário (ou IP no público), nos
+# endpoints que chamam LLM. 0 desliga. Ver core/ratelimit.py (por worker
+# com o cache padrão; Redis fecha o teto global — OPERACAO.md).
+RATE_LIMIT_PERGUNTAS_POR_MIN = int(os.environ.get("RATE_LIMIT_PERGUNTAS_POR_MIN", "20"))
+RATE_LIMIT_MATERIAIS_POR_MIN = int(os.environ.get("RATE_LIMIT_MATERIAIS_POR_MIN", "8"))
+
 # --- Analytics de perguntas -------------------------------------------
 # Limiar de distância de cosseno para agrupar perguntas de sentido próximo
 # (0 = idêntico). ~0.12 corresponde a similaridade ~0.88. Calibrar com dados.
