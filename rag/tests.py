@@ -129,3 +129,13 @@ def test_filtrar_vigentes_mantem_doutrina_valida() -> None:
     doutrina = _trecho(_doc(TipoFonte.DOUTRINA))
     restantes = list(filtrar_vigentes(Trecho.objects.all()))
     assert restantes == [doutrina]
+
+
+# --------------------------------------------------- golden set (recall@k)
+def test_recall_do_caso_conta_por_substring() -> None:
+    from rag.golden import recall_do_caso
+
+    titulos = ["Lei 9.504/97 (Lei das Eleições)", "Resolução TSE 23.610"]
+    assert recall_do_caso(titulos, ["9.504"]) == 1.0
+    assert recall_do_caso(titulos, ["9.504", "inexistente"]) == 0.5
+    assert recall_do_caso(titulos, []) == 1.0  # sem esperadas → trivialmente 100%

@@ -49,6 +49,35 @@ def test_listar_so_do_proprio_usuario(django_user_model) -> None:
 
 
 @pytest.mark.django_db
+def test_listar_pagina_com_limit_e_offset(django_user_model) -> None:
+    u = django_user_model.objects.create(username="u")
+    for i in range(5):
+        Conversa.objects.create(user=u, titulo=f"conv {i}")
+    c = APIClient()
+    c.force_login(u)
+
+    primeira = c.get("/api/conversas/?limit=2")
+    assert len(primeira.data) == 2  # limita a fatia (antes trazia todas)
+
+    segunda = c.get("/api/conversas/?limit=2&offset=2")
+    assert len(segunda.data) == 2
+    ids_p = {x["id"] for x in primeira.data}
+    ids_s = {x["id"] for x in segunda.data}
+    assert ids_p.isdisjoint(ids_s)  # páginas não se sobrepõem
+
+
+@pytest.mark.django_db
+def test_listar_limit_invalido_usa_padrao(django_user_model) -> None:
+    u = django_user_model.objects.create(username="u")
+    Conversa.objects.create(user=u, titulo="x")
+    c = APIClient()
+    c.force_login(u)
+    resp = c.get("/api/conversas/?limit=abc")  # inválido → default, não estoura
+    assert resp.status_code == 200
+    assert len(resp.data) == 1
+
+
+@pytest.mark.django_db
 def test_detalhe_renomear_e_apagar(django_user_model) -> None:
     u = django_user_model.objects.create(username="u")
     conv = Conversa.objects.create(user=u, titulo="Antigo")
