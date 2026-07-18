@@ -33,10 +33,53 @@ o `assunto`; o 2º define a natureza (doutrina/curso = contexto não citável).
 ```bash
 python manage.py ingerir_drive            # incremental (md5); reconcilia remoções
 python manage.py ingerir_drive --pasta Jurídico   # só um assunto
+python manage.py ingerir_drive --so-vazios        # só re-embeda docs com 0 trechos (do cache)
+python manage.py ingerir_drive --dry-run          # só lista o que faria
 ```
 
 Requer `GOOGLE_SERVICE_ACCOUNT_JSON` e `RAG_DRIVE_ROOT_FOLDER_ID`. O texto extraído
-(OCR/nativo) é cacheado no banco para não re-OCRar quando o conteúdo não muda.
+(OCR/nativo) é cacheado no banco para não re-OCRar quando o conteúdo não muda. O
+OCR é **retomável** (`Documento.ocr_paginas`/`ocr_completo`): se um scan longo cair
+no meio, o próximo run continua da última página salva. Ao fim, o comando **lista
+docs com 0 trechos** e sugere `--so-vazios`.
+
+### Sincronização automática (cron no Railway) — RECOMENDADO
+
+Hoje a ingestão é **manual**. Rodá-la via `railway ssh` mantido aberto é frágil
+(a sessão cai a cada ~10-15 min; livros grandes não terminam numa sessão). A
+solução robusta é um **serviço de cron no Railway** que roda a ingestão
+server-side (sem limite de sessão) — e mantém o corpus atualizado sozinho.
+
+**Passo a passo (painel do Railway, projeto `Tira-Dúvidas_Eleitoral`):**
+
+1. **New → Service → GitHub Repo** → mesmo repo (`Tira_Duvidas_Eleitoral`).
+   Nomeie algo como `rag-sync`.
+2. Em **Settings → Deploy → Custom Start Command**, defina:
+   ```
+   python manage.py ingerir_drive
+   ```
+   (Sobrescreve o start command do `railway.json`, que é o do web.)
+3. Em **Settings → Cron Schedule**, defina o horário. Sugestão diária de
+   madrugada (evita concorrer com pico de uso):
+   ```
+   0 6 * * *
+   ```
+   (Railway roda o container no horário, executa o comando e encerra quando o
+   processo sai — a ingestão incremental é rápida quando nada mudou.)
+4. **Variables** — o serviço precisa das MESMAS variáveis do web. Referencie o
+   Postgres e replique as chaves:
+   - `DATABASE_URL` → referência ao serviço Postgres (rede privada, igual ao web);
+   - `ANTHROPIC_API_KEY`, `EMBEDDING_PROVIDER=voyage`, `VOYAGE_API_KEY`;
+   - `GOOGLE_SERVICE_ACCOUNT_JSON`, `RAG_DRIVE_ROOT_FOLDER_ID`;
+   - (opcional) `VOYAGE_PAUSA` para espaçar embeddings se a cota apertar.
+5. O build usa o mesmo `nixpacks.toml` (tesseract+poppler já vêm p/ o OCR).
+
+**Notas:**
+- Não precisa `migrate`/`collectstatic` no cron — o web já cuida disso no deploy.
+- É seguro rodar junto com o web: a ingestão é incremental e idempotente
+  (`update_or_create` por `origem_id`; reconciliação só na varredura completa).
+- Para o expurgo LGPD, crie um 2º cron análogo com start command
+  `python manage.py expurgar_dados` (ver seção LGPD).
 
 **Vigência:** só documentos `vigente=True` e dentro de `vigencia_inicio/fim` entram
 na busca — norma revogada não vira contexto nem citação. Ao subir uma norma que
