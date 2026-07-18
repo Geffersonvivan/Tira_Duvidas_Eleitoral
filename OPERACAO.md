@@ -54,11 +54,16 @@ server-side (sem limite de sessão) — e mantém o corpus atualizado sozinho.
 
 1. **New → Service → GitHub Repo** → mesmo repo (`Tira_Duvidas_Eleitoral`).
    Nomeie algo como `rag-sync`.
-2. Em **Settings → Deploy → Custom Start Command**, defina:
+2. Em **Settings → Config-as-code / Railway Config File**, aponte para:
    ```
-   python manage.py ingerir_drive
+   /railway.cron.json
    ```
-   (Sobrescreve o start command do `railway.json`, que é o do web.)
+   Esse arquivo (no repo) define `startCommand: python manage.py ingerir_drive`
+   e `restartPolicyType: NEVER`. **É obrigatório fazer assim:** o `railway.json`
+   (config do web, com o gunicorn) SOBREPÕE o campo "Custom Start Command" do
+   painel — então setar o start command na UI do serviço de cron é ignorado, e o
+   cron acabaria rodando o gunicorn (que nunca encerra). O arquivo de config
+   dedicado resolve isso.
 3. Em **Settings → Cron Schedule**, defina o horário. Sugestão diária de
    madrugada (evita concorrer com pico de uso):
    ```
