@@ -51,10 +51,16 @@ def classificar_intencao(pergunta: str) -> Classificacao:
     modelo = escolher_modelo(Tarefa.CLASSIFICAR)
     system = (
         "Você classifica dúvidas para um assistente eleitoral brasileiro. "
-        "Responda com UMA palavra, exatamente uma de: "
-        "direito, contabilidade, impulsionamento, fora. "
-        "Use 'fora' para qualquer assunto que não seja direito eleitoral, "
-        "contabilidade eleitoral ou impulsionamento eleitoral."
+        "Responda com UMA palavra: direito, contabilidade, impulsionamento ou fora.\n"
+        "- direito: qualquer tema de direito eleitoral — propaganda, condutas vedadas, "
+        "inelegibilidade, registro de candidatura, CALENDÁRIO e DATAS (data da eleição, "
+        "turnos, prazos), crimes eleitorais, processo eleitoral.\n"
+        "- contabilidade: finanças de campanha (arrecadação, gastos, limites, doações, "
+        "prestação de contas).\n"
+        "- impulsionamento: propaganda paga/impulsionamento na internet e redes.\n"
+        "- fora: só o que NÃO tem relação com o processo eleitoral (ex.: receita de bolo, "
+        "esporte, ou a agenda pessoal de um candidato específico).\n"
+        "Na dúvida entre um tema eleitoral e fora, PREFIRA o tema eleitoral."
     )
     resp = client.completar(modelo, system, [{"role": "user", "content": pergunta}], max_tokens=16)
     budget.registrar_uso(modelo, Tarefa.CLASSIFICAR, resp.tokens_entrada, resp.tokens_saida)
