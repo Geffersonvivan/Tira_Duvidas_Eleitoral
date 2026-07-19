@@ -141,3 +141,20 @@ def test_gate_bloqueia_com_enforce(django_user_model) -> None:
     bloq = gate.bloqueio_por_cota(req, gate.MATERIAIS)  # material sempre pago
     assert bloq is not None and bloq[1] == 402
     assert gate.bloqueio_por_cota(req, gate.PERGUNTAS) is None  # tem 3 de amostra
+
+
+# ------------------------------------------------------------- página /planos/
+def test_planos_view_renderiza() -> None:
+    # RequestFactory + view direta evita o bug do test Client no Python 3.14.
+    from django.contrib.auth.models import AnonymousUser
+    from django.test import RequestFactory
+
+    from billing.views import planos_view
+
+    req = RequestFactory().get("/planos/")
+    req.user = AnonymousUser()
+    resp = planos_view(req)
+    assert resp.status_code == 200
+    corpo = resp.content.decode()
+    assert "Essencial" in corpo and "Profissional" in corpo
+    assert "wa.me/" in corpo  # card de consultoria WhatsApp
