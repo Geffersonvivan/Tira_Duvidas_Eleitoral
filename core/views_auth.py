@@ -13,7 +13,15 @@ def landing_view(request):
     """Landing pública em `/`. Com Clerk ligado, usuário já logado vai ao app."""
     if settings.CLERK_ENABLED and request.user.is_authenticated:
         return redirect("app")
-    return render(request, "landing.html", _clerk_ctx())
+    # Preços vêm da fonte única (billing.plans) para não desincronizar da /planos.
+    from billing.plans import ESSENCIAL, PRO, plano_do
+    from billing.services import acesso_ate
+
+    ctx = _clerk_ctx()
+    ctx["essencial"] = plano_do(ESSENCIAL)
+    ctx["pro"] = plano_do(PRO)
+    ctx["acesso_ate"] = acesso_ate()
+    return render(request, "landing.html", ctx)
 
 
 def auth_sync_view(request):

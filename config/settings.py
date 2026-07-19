@@ -95,6 +95,14 @@ CLERK_PUBLISHABLE_KEY = os.environ.get("CLERK_PUBLISHABLE_KEY", "")
 CLERK_SECRET_KEY = os.environ.get("CLERK_SECRET_KEY", "")
 CLERK_WEBHOOK_SECRET = os.environ.get("CLERK_WEBHOOK_SECRET", "")
 CLERK_ENABLED = bool(CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY)
+# Defesa em profundidade na validação do JWT (opcional; se vazio, só a assinatura
+# + claims básicos são conferidos). CLERK_ISSUER = Frontend API URL do Clerk
+# (ex.: https://clerk.tiraduvidaseleitoral.com.br). CLERK_AUTHORIZED_PARTIES =
+# lista separada por vírgula de origens (azp) aceitas.
+CLERK_ISSUER = os.environ.get("CLERK_ISSUER", "")
+CLERK_AUTHORIZED_PARTIES = [
+    p.strip() for p in os.environ.get("CLERK_AUTHORIZED_PARTIES", "").split(",") if p.strip()
+]
 LOGIN_URL = "/"
 
 # --- Limites de uso (custo/abuso) -------------------------------------
