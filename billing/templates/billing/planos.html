@@ -18,6 +18,10 @@
   .btn-pago { background: #1f6f54; color: #fff; }
   .btn-pago:hover { background: #185740; }
   .btn-wpp { background: #25d366; color: #fff; }
+  .btn-wpp:hover { background: #1fb457; }
+  .plano-card.consultoria { border-color: #25d366; box-shadow: 0 8px 24px rgba(37,211,102,.12); }
+  .consultoria-pitch { color: #4b5563; font-size: .92rem; line-height: 1.45; margin: 2px 0 14px; }
+  .plano-feats li strong { color: #111827; }
   .banner { padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
   .banner.ok { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
   .banner.warn { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
@@ -65,18 +69,19 @@
     </div>
 
     <!-- Consultoria WhatsApp -->
-    <div class="plano-card">
-      <div class="plano-nome">Consultoria com advogado</div>
+    <div class="plano-card consultoria">
+      <div class="plano-nome">Consultoria com especialista</div>
       <div class="plano-preco">Sob consulta</div>
-      <div class="plano-meta">especialista em direito eleitoral · via WhatsApp</div>
+      <div class="plano-meta">Advogado · Contador · Gestor de tráfego · via WhatsApp</div>
+      <p class="consultoria-pitch">A IA tira a dúvida na hora. Quando o caso aperta, um humano assume — direto no seu WhatsApp.</p>
       <ul class="plano-feats">
-        <li>Atendimento humano especializado</li>
-        <li>Análise do seu caso concreto</li>
-        <li>Orientação personalizada</li>
+        <li><strong>Advogado eleitoral</strong> — representações, registro de candidatura e defesa nas contas</li>
+        <li><strong>Contador de campanha</strong> — prestação de contas e SPCE sem susto na Justiça Eleitoral</li>
+        <li><strong>Gestor de tráfego</strong> — impulsionamento e mídia paga dentro das regras do TSE</li>
       </ul>
       <a class="plano-btn btn-wpp" target="_blank" rel="noopener"
-         href="https://wa.me/{{ whatsapp }}?text=Ol%C3%A1%2C%20quero%20falar%20sobre%20a%20consultoria%20jur%C3%ADdica%20eleitoral.">
-        Falar no WhatsApp
+         href="https://wa.me/{{ whatsapp }}?text=Ol%C3%A1%2C%20quero%20falar%20com%20um%20especialista%20%28advogado%2C%20contador%20ou%20gestor%20de%20tr%C3%A1fego%29%20sobre%20a%20campanha.">
+        Falar com um especialista
       </a>
     </div>
   </div>
