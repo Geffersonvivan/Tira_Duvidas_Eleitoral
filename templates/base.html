@@ -10,12 +10,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;450;500;600&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
-<link rel="stylesheet" href="{% static 'css/app.css' %}?v=28">
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=29">
 </head>
 <body{% if user.is_authenticated %} class="app-auth"{% endif %}>
 <header class="top">
   <div class="top-inner">
-    <div class="brand">
+    <a class="brand" href="{% if user.is_authenticated %}/app/{% else %}/{% endif %}" aria-label="Voltar ao início">
       <div class="seal" aria-hidden="true">
         <svg viewBox="0 0 32 32"><path d="M8 9.5 h16 a1.8 1.8 0 0 1 1.8 1.8 v6.4 a1.8 1.8 0 0 1 -1.8 1.8 h-8 l-4.5 3.2 v-3.2 h-3.5 a1.8 1.8 0 0 1 -1.8 -1.8 v-6.4 a1.8 1.8 0 0 1 1.8 -1.8 z" fill="none" stroke="#fff" stroke-width="1.9" stroke-linejoin="round"/><path d="M11.5 14.4 l2.4 2.4 L20 11.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
@@ -23,7 +23,7 @@
         <h1>Tira-Dúvidas Eleitoral - TDE</h1>
         <span>Direito, contabilidade e impulsionamento eleitoral</span>
       </div>
-    </div>
+    </a>
     {% if user.is_authenticated %}
     <div class="conta">
       <button class="conta-trigger" id="conta-trigger" aria-haspopup="menu" aria-expanded="false">

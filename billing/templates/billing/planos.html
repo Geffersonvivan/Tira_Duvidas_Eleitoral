@@ -2,6 +2,8 @@
 {% block content %}
 <style>
   .planos-wrap { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+  .planos-voltar { display: inline-flex; align-items: center; gap: 6px; color: #1f6f54; font-weight: 600; font-size: .95rem; text-decoration: none; margin-bottom: 18px; }
+  .planos-voltar:hover { text-decoration: underline; }
   .planos-wrap h1 { font-size: 1.9rem; font-weight: 800; text-align: center; margin-bottom: 6px; }
   .planos-sub { text-align: center; color: #4b5563; margin-bottom: 28px; }
   .planos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
@@ -28,6 +30,7 @@
 </style>
 
 <div class="planos-wrap">
+  <a class="planos-voltar" href="{% if user.is_authenticated %}/app/{% else %}/{% endif %}">← Voltar ao Tira-Dúvidas</a>
   <h1>Planos de acesso</h1>
   <p class="planos-sub">Acesso único ao Tira-Dúvidas Eleitoral até <strong>{{ acesso_ate|date:"d/m/Y" }}</strong> (30 dias após a eleição).</p>
 
