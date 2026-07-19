@@ -21,6 +21,7 @@ def landing_view(request):
     ctx["essencial"] = plano_do(ESSENCIAL)
     ctx["pro"] = plano_do(PRO)
     ctx["acesso_ate"] = acesso_ate()
+    ctx["whatsapp"] = settings.BILLING_WHATSAPP
     return render(request, "landing.html", ctx)
 
 
