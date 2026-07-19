@@ -97,6 +97,10 @@ def perguntar_stream(request):
         return JsonResponse({"detail": "JSON inválido."}, status=400)
     if not pergunta:
         return JsonResponse({"pergunta": ["Campo obrigatório."]}, status=400)
+    # Mesmo teto do PerguntaInputSerializer (endpoint não-stream): evita inflar
+    # tokens de embedding + LLM com uma pergunta gigante (DoS de custo).
+    if len(pergunta) > 2000:
+        return JsonResponse({"pergunta": ["Máximo de 2000 caracteres."]}, status=400)
 
     # Histórico: só persiste com usuário autenticado (público não tem dono).
     conversa = nova_conversa = None

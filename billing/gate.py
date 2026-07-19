@@ -12,6 +12,7 @@ Lógica pura sobre o `UserProfile` (fácil de testar, sem Stripe nem HTTP):
 - se o passe pago venceu (`subscription_expires_at` no passado), vale FREE.
 """
 
+from django.db.models import F
 from django.utils import timezone
 
 from billing.plans import FREE, plano_do
@@ -47,10 +48,15 @@ def pode(profile, tipo: str, n: int = 1) -> bool:
 
 
 def consumir(profile, tipo: str, n: int = 1) -> None:
-    """Registra o consumo de `n` unidades (chamar após o uso bem-sucedido)."""
+    """Registra o consumo de `n` unidades (chamar após o uso bem-sucedido).
+
+    Incremento atômico no banco (F()) para não sofrer lost-update em requisições
+    concorrentes — dois consumos paralelos somam de fato +n cada, mantendo o
+    contador fiel ao teto do passe.
+    """
     campo = "perguntas_usadas" if tipo == PERGUNTAS else "materiais_usados"
-    setattr(profile, campo, getattr(profile, campo) + n)
-    profile.save(update_fields=[campo])
+    type(profile).objects.filter(pk=profile.pk).update(**{campo: F(campo) + n})
+    profile.refresh_from_db(fields=[campo])
 
 
 def resetar_cota(profile) -> None:

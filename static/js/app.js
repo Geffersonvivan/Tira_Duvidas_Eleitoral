@@ -264,10 +264,13 @@ function fontesHTML(fontes) {
 }
 
 // Renderiza o Markdown da resposta (negrito, títulos, listas). Fallback seguro
-// para texto escapado se o marked.js não tiver carregado.
+// para texto escapado se o marked.js não tiver carregado. A saída passa por
+// DOMPurify antes de virar HTML (defesa contra XSS via conteúdo do LLM).
 function renderMd(texto) {
-  if (window.marked) return window.marked.parse(texto || "");
-  return esc(texto).replace(/\n/g, "<br>");
+  const html = window.marked
+    ? window.marked.parse(texto || "")
+    : esc(texto).replace(/\n/g, "<br>");
+  return window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
 }
 
 function bolhaResposta(data) {

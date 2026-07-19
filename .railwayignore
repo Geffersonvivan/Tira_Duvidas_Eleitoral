@@ -1,0 +1,24 @@
+# Segredos — nunca devem entrar na imagem de build (prod lê tudo de env vars)
+.env
+.env.*
+!.env.example
+*service-account*.json
+*serviceaccount*.json
+tira-duvidas-eleitoral-*.json
+
+# Ambiente / caches
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Dados / dev
+db.sqlite3
+*.sqlite3
+
+# Repo / ferramentas
+.git/
+.github/
+.claude/

@@ -104,7 +104,23 @@ class ClerkAuthMiddleware:
             return None
 
         public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(rsa_key))
-        return jwt.decode(token, public_key, algorithms=["RS256"], options={"verify_aud": False})
+        # Defesa em profundidade: além da assinatura, exige claims básicos e
+        # valida o issuer quando configurado (CLERK_ISSUER). Isso limita o reuso
+        # de um JWT válido emitido para outro fim na mesma instância Clerk.
+        decode_kwargs = {
+            "algorithms": ["RS256"],
+            "options": {"verify_aud": False, "require": ["exp", "iat", "sub"]},
+        }
+        if settings.CLERK_ISSUER:
+            decode_kwargs["issuer"] = settings.CLERK_ISSUER
+        payload = jwt.decode(token, public_key, **decode_kwargs)
+
+        # Valida o authorized party (azp) contra a allowlist, quando configurada.
+        parties = settings.CLERK_AUTHORIZED_PARTIES
+        if parties and payload.get("azp") and payload["azp"] not in parties:
+            logger.warning("Clerk JWT com azp não autorizado: %s", payload.get("azp"))
+            return None
+        return payload
 
     @staticmethod
     def _find_rsa_key(jwks, kid):

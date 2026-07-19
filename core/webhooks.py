@@ -69,7 +69,8 @@ def clerk_webhook(request):
         UserProfile.objects.update_or_create(
             user=user, defaults={"clerk_id": clerk_id, "avatar_url": avatar}
         )
-        logger.info("Clerk sync: %s %s (%s)", "created" if created else "updated", clerk_id, email)
+        # Sem e-mail no log (PII): o clerk_id já correlaciona o usuário.
+        logger.info("Clerk sync: %s %s", "created" if created else "updated", clerk_id)
 
     elif event_type == "user.deleted":
         clerk_id = data.get("id")
