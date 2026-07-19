@@ -10,6 +10,7 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from billing import gate as billing_gate
 from core import ratelimit
 from core.auth import autorizado
 from llm import budget
@@ -44,6 +45,10 @@ def perguntar(request: Request) -> Response:
     if bloqueio:
         return Response({"detail": bloqueio[0]}, status=bloqueio[1])
 
+    cota = billing_gate.bloqueio_por_cota(request, billing_gate.PERGUNTAS)
+    if cota:
+        return Response({"detail": cota[0]}, status=cota[1])
+
     entrada = PerguntaInputSerializer(data=request.data)
     entrada.is_valid(raise_exception=True)
 
@@ -52,6 +57,9 @@ def perguntar(request: Request) -> Response:
     except LLMIndisponivel:
         logger.warning("LLM indisponível ao responder pergunta")
         return Response({"detail": MSG_INDISPONIVEL}, status=503)
+
+    if resultado.on_topic:  # amostra/passe só consome em pergunta no escopo
+        billing_gate.registrar_uso(request, billing_gate.PERGUNTAS)
 
     return Response(
         {
@@ -76,6 +84,10 @@ def perguntar_stream(request):
     bloqueio = _bloqueio_de_uso(request)
     if bloqueio:
         return JsonResponse({"detail": bloqueio[0]}, status=bloqueio[1])
+
+    cota = billing_gate.bloqueio_por_cota(request, billing_gate.PERGUNTAS)
+    if cota:
+        return JsonResponse({"detail": cota[0]}, status=cota[1])
 
     try:
         corpo = json.loads(request.body)
@@ -123,6 +135,8 @@ def perguntar_stream(request):
                 from conversas.services import salvar_mensagem
 
                 salvar_mensagem(conversa, Mensagem.Papel.ASSISTENTE, "".join(partes), **meta)
+            if meta.get("on_topic") and partes:  # consome só pergunta no escopo respondida
+                billing_gate.registrar_uso(request, billing_gate.PERGUNTAS)
         except LLMIndisponivel:
             logger.warning("LLM indisponível no stream de perguntas")
             yield json.dumps({"tipo": "erro", "texto": MSG_INDISPONIVEL}) + "\n"
