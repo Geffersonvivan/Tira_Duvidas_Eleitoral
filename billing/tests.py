@@ -1,8 +1,10 @@
 """Testes do billing: gate de cota + processamento de webhook (sem Stripe)."""
 
 from datetime import timedelta
+from types import SimpleNamespace
 
 import pytest
+from django.test import override_settings
 from django.utils import timezone
 
 from billing import gate, services
@@ -119,3 +121,23 @@ def test_webhook_sem_pagamento_nao_ativa(django_user_model) -> None:
     assert services.processar_evento(_evento(u.id, ESSENCIAL, pago="unpaid")) == "sem_pagamento"
     u.profile.refresh_from_db()
     assert u.profile.plano == FREE
+
+
+# ------------------------------------------ interruptor BILLING_ENFORCE
+@pytest.mark.django_db
+def test_gate_inerte_sem_enforce(django_user_model) -> None:
+    """Default (enforce off): nunca bloqueia — app funciona sem limites."""
+    u = django_user_model.objects.create(username="semenforce")
+    req = SimpleNamespace(user=u)  # free, mas enforce desligado
+    assert gate.bloqueio_por_cota(req, gate.MATERIAIS) is None
+    assert gate.bloqueio_por_cota(req, gate.PERGUNTAS) is None
+
+
+@override_settings(BILLING_ENFORCE=True)
+@pytest.mark.django_db
+def test_gate_bloqueia_com_enforce(django_user_model) -> None:
+    u = django_user_model.objects.create(username="comenforce")
+    req = SimpleNamespace(user=u)  # free
+    bloq = gate.bloqueio_por_cota(req, gate.MATERIAIS)  # material sempre pago
+    assert bloq is not None and bloq[1] == 402
+    assert gate.bloqueio_por_cota(req, gate.PERGUNTAS) is None  # tem 3 de amostra

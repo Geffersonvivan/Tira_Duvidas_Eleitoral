@@ -70,7 +70,14 @@ def _perfil_de(request):
 
 
 def bloqueio_por_cota(request, tipo: str, n: int = 1):
-    """(mensagem, 402) se o usuário logado não tem cota; None se ok ou público."""
+    """(mensagem, 402) se o usuário logado não tem cota; None se ok ou público.
+
+    Inerte enquanto `BILLING_ENFORCE` estiver desligado (a cobrança não vale até
+    o Stripe estar configurado — evita travar usuários sem forma de pagar)."""
+    from django.conf import settings
+
+    if not getattr(settings, "BILLING_ENFORCE", False):
+        return None
     prof = _perfil_de(request)
     if prof is None or pode(prof, tipo, n):
         return None
