@@ -12,6 +12,7 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from billing import gate as billing_gate
 from core import ratelimit
 from core.auth import autorizado
 from llm import budget
@@ -59,13 +60,21 @@ def analisar(request: Request) -> Response:
 
     entrada = AnaliseInputSerializer(data=request.data)
     entrada.is_valid(raise_exception=True)
+    arquivos = entrada.validated_data["arquivos"]
 
-    pecas = [
-        (f.name, f.read(), services.media_type(f.name)) for f in entrada.validated_data["arquivos"]
-    ]
+    # Material é sempre pago (free = 0). Exige cota para todas as peças do lote.
+    cota = billing_gate.bloqueio_por_cota(request, billing_gate.MATERIAIS, n=len(arquivos))
+    if cota:
+        return Response({"detail": cota[0]}, status=cota[1])
+
+    pecas = [(f.name, f.read(), services.media_type(f.name)) for f in arquivos]
     try:
         resultados = services.analisar_lote(pecas)
     except LLMIndisponivel:
         logger.warning("LLM indisponível ao analisar material")
         return Response({"detail": MSG_INDISPONIVEL}, status=503)
+
+    # Consome só as peças efetivamente analisadas (on-topic); off-topic não cobra.
+    consumidos = sum(1 for r in resultados if r.on_topic)
+    billing_gate.registrar_uso(request, billing_gate.MATERIAIS, n=consumidos)
     return Response({"resultados": [_serializar(r) for r in resultados]})

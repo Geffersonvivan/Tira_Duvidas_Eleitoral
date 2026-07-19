@@ -366,6 +366,14 @@ async function perguntar() {
       headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken() },
       body: JSON.stringify({ pergunta: texto, conversa_id: conversaAtual }),
     });
+    if (r.status === 402) {
+      fecharCarregando();
+      let detalhe = "";
+      try { detalhe = (await r.json()).detail; } catch (e) {}
+      chat.insertAdjacentHTML("beforeend", passeHTML(detalhe));
+      rolar();
+      return;
+    }
     if (!r.ok || !r.body) {
       fecharCarregando();
       chat.insertAdjacentHTML("beforeend", `<div class="disclaimer">Erro ao consultar. Tente novamente.</div>`);
@@ -484,6 +492,17 @@ function pareceresHTML(res) {
   </div>`;
 }
 
+// Aviso de "sem cota" (HTTP 402): mostra a mensagem do backend + link para /planos/.
+function passeHTML(detalhe) {
+  const msg = detalhe || "Você atingiu o limite de uso. Adquira um passe para continuar.";
+  return `<div class="disclaimer" style="border-left:3px solid #1f6f54;padding-left:12px">
+    ${esc(msg)}
+    <div style="margin-top:10px">
+      <a href="/planos/" style="display:inline-block;background:#1f6f54;color:#fff;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:600">Ver planos</a>
+    </div>
+  </div>`;
+}
+
 async function analisar(files) {
   // Ao enviar, a dropzone encolhe para uma barra compacta e o parecer vira foco.
   document.querySelector('.panel[data-panel="material"]').classList.add("com-parecer");
@@ -497,6 +516,10 @@ async function analisar(files) {
       body: fd,
     });
     const data = await r.json();
+    if (r.status === 402) {
+      painel.innerHTML = `<div class="card parecer">${passeHTML(data.detail)}</div>`;
+      return;
+    }
     if (!r.ok) {
       painel.innerHTML = `<div class="card parecer"><div class="disclaimer">${esc(
         (data.arquivos && data.arquivos[0]) || "Não foi possível analisar."

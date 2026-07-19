@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     "materiais",
     "analytics",
     "conversas",
+    "billing",
 ]
 
 MIDDLEWARE = [
@@ -107,6 +108,23 @@ RATE_LIMIT_MATERIAIS_POR_MIN = int(os.environ.get("RATE_LIMIT_MATERIAIS_POR_MIN"
 # Limiar de distância de cosseno para agrupar perguntas de sentido próximo
 # (0 = idêntico). ~0.12 corresponde a similaridade ~0.88. Calibrar com dados.
 ANALYTICS_LIMIAR_DISTANCIA = float(os.environ.get("ANALYTICS_LIMIAR_DISTANCIA", "0.12"))
+
+# --- Billing / Stripe --------------------------------------------------
+# Assinatura recorrente (Essencial R$349, Profissional R$499). Crie os dois
+# Prices RECORRENTES no dashboard do Stripe e cole os IDs aqui. Sem chaves, o
+# billing fica inerte (as views retornam erro amigável) — não quebra o app.
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+BILLING_ENABLED = bool(STRIPE_SECRET_KEY)
+# Interruptor da COBRANÇA: com False (default) o gate de cota é inerte — o app
+# funciona sem limites, como hoje. Ligar (True) só quando o Stripe estiver
+# configurado, senão os usuários travam nas 3 perguntas sem como pagar.
+BILLING_ENFORCE = _env_bool("BILLING_ENFORCE", "False")
+# Fim do acesso do passe (fixo p/ todos) — 30 dias após a eleição de 04/10/2026.
+BILLING_ACESSO_ATE = os.environ.get("BILLING_ACESSO_ATE", "2026-11-03")
+# Consultoria jurídica: só CTA de WhatsApp (sem checkout). Formato E.164 sem "+".
+BILLING_WHATSAPP = os.environ.get("BILLING_WHATSAPP", "5549991031516")
 
 # --- RAG · recuperação -------------------------------------------------
 # Distância de cosseno máxima aceita num trecho recuperado (0 = idêntico,

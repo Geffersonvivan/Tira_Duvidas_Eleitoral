@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .planos-wrap { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+  .planos-wrap h1 { font-size: 1.9rem; font-weight: 800; text-align: center; margin-bottom: 6px; }
+  .planos-sub { text-align: center; color: #4b5563; margin-bottom: 28px; }
+  .planos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .plano-card { border: 1px solid #e5e7eb; border-radius: 16px; padding: 24px; background: #fff; display: flex; flex-direction: column; }
+  .plano-card.destaque { border-color: #1f6f54; box-shadow: 0 8px 24px rgba(31,111,84,.12); }
+  .plano-nome { font-weight: 700; font-size: 1.15rem; }
+  .plano-preco { font-size: 2rem; font-weight: 800; margin: 8px 0 2px; }
+  .plano-preco small { font-size: .9rem; font-weight: 500; color: #6b7280; }
+  .plano-meta { color: #6b7280; font-size: .85rem; margin-bottom: 14px; }
+  .plano-feats { list-style: none; padding: 0; margin: 0 0 20px; flex: 1; }
+  .plano-feats li { display: flex; gap: 8px; padding: 5px 0; color: #374151; font-size: .95rem; }
+  .plano-feats li::before { content: "✓"; color: #1f6f54; font-weight: 800; }
+  .plano-btn { display: block; text-align: center; padding: 12px; border-radius: 10px; font-weight: 700; text-decoration: none; }
+  .btn-pago { background: #1f6f54; color: #fff; }
+  .btn-pago:hover { background: #185740; }
+  .btn-wpp { background: #25d366; color: #fff; }
+  .banner { padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+  .banner.ok { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+  .banner.warn { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+</style>
+
+<div class="planos-wrap">
+  <h1>Planos de acesso</h1>
+  <p class="planos-sub">Acesso único ao Tira-Dúvidas Eleitoral até <strong>{{ acesso_ate|date:"d/m/Y" }}</strong> (30 dias após a eleição).</p>
+
+  {% if sucesso %}<div class="banner ok">Pagamento confirmado! Seu acesso foi liberado. ✅</div>{% endif %}
+  {% if cancelado %}<div class="banner warn">Checkout cancelado — nenhuma cobrança foi feita.</div>{% endif %}
+  {% if plano_atual and plano_atual != "free" %}
+    <div class="banner ok">Você tem o passe <strong>{{ plano_atual|capfirst }}</strong> ativo até {{ acesso_ate|date:"d/m/Y" }}.</div>
+  {% elif perguntas_restantes is not None %}
+    <div class="banner warn">Você está no plano grátis — restam <strong>{{ perguntas_restantes }}</strong> pergunta(s) de amostra. A análise de material exige um passe.</div>
+  {% endif %}
+
+  <div class="planos-grid">
+    <!-- Essencial -->
+    <div class="plano-card">
+      <div class="plano-nome">{{ essencial.nome }}</div>
+      <div class="plano-preco">R$ {{ essencial.preco|floatformat:0 }} <small>· acesso único</small></div>
+      <div class="plano-meta">até {{ acesso_ate|date:"d/m/Y" }} · sem mensalidade</div>
+      <ul class="plano-feats">
+        <li>{{ essencial.perguntas }} perguntas ao RAG no período</li>
+        <li>{{ essencial.materiais }} verificações de material</li>
+        <li>Legislação e resoluções do TSE atualizadas</li>
+        <li>Respostas fundamentadas, com mitigação de alucinações</li>
+      </ul>
+      <a class="plano-btn btn-pago" href="{% url 'checkout' %}?plan=essencial">Começar agora</a>
+    </div>
+
+    <!-- Profissional -->
+    <div class="plano-card destaque">
+      <div class="plano-nome">{{ pro.nome }}</div>
+      <div class="plano-preco">R$ {{ pro.preco|floatformat:0 }} <small>· acesso único</small></div>
+      <div class="plano-meta">até {{ acesso_ate|date:"d/m/Y" }} · maior acesso</div>
+      <ul class="plano-feats">
+        <li>{{ pro.perguntas }} perguntas ao RAG no período</li>
+        <li>{{ pro.materiais }} verificações de material</li>
+        <li>Tudo do Essencial, com o dobro de uso</li>
+        <li>Prioridade em novos recursos</li>
+      </ul>
+      <a class="plano-btn btn-pago" href="{% url 'checkout' %}?plan=pro">Começar agora</a>
+    </div>
+
+    <!-- Consultoria WhatsApp -->
+    <div class="plano-card">
+      <div class="plano-nome">Consultoria com advogado</div>
+      <div class="plano-preco">Sob consulta</div>
+      <div class="plano-meta">especialista em direito eleitoral · via WhatsApp</div>
+      <ul class="plano-feats">
+        <li>Atendimento humano especializado</li>
+        <li>Análise do seu caso concreto</li>
+        <li>Orientação personalizada</li>
+      </ul>
+      <a class="plano-btn btn-wpp" target="_blank" rel="noopener"
+         href="https://wa.me/{{ whatsapp }}?text=Ol%C3%A1%2C%20quero%20falar%20sobre%20a%20consultoria%20jur%C3%ADdica%20eleitoral.">
+        Falar no WhatsApp
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
