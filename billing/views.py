@@ -1,5 +1,6 @@
 """Views do billing: página de planos, checkout (redirect) e webhook do Stripe."""
 
+import json
 import logging
 
 from django.conf import settings
@@ -65,12 +66,14 @@ def stripe_webhook(request):
 
     sig = request.headers.get("Stripe-Signature", "")
     try:
-        event = stripe.Webhook.construct_event(request.body, sig, secret)
+        stripe.Webhook.construct_event(request.body, sig, secret)  # valida a assinatura
     except (ValueError, stripe.error.SignatureVerificationError):
         return HttpResponse(status=400)  # fail-closed
 
     try:
-        resultado = services.processar_evento(event)
+        # Processa como dict puro: o stripe.Event (StripeObject) não suporta .get().
+        evento = json.loads(request.body)
+        resultado = services.processar_evento(evento)
     except Exception:
         _log.exception("Erro ao processar webhook Stripe")
         return JsonResponse({"erro": "falha interna"}, status=500)

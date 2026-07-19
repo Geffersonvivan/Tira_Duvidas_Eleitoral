@@ -123,6 +123,29 @@ def test_webhook_sem_pagamento_nao_ativa(django_user_model) -> None:
     assert u.profile.plano == FREE
 
 
+@pytest.mark.django_db
+@override_settings(STRIPE_WEBHOOK_SECRET="whsec_test")  # noqa: S106 — dummy de teste
+def test_webhook_view_processa_corpo_como_dict(client, django_user_model, monkeypatch) -> None:
+    """Regressão: a view processa o corpo como dict puro — o stripe.Event não tem
+    .get() (era o KeyError/AttributeError 'get' em produção)."""
+    import json as _json
+
+    import stripe
+
+    monkeypatch.setattr(stripe.Webhook, "construct_event", lambda *a, **k: None)  # pula assinatura
+    u = django_user_model.objects.create(username="viaview")
+    corpo = _json.dumps(_evento(u.id, ESSENCIAL, event_id="evt_view")).encode()
+    r = client.post(
+        "/webhooks/stripe/",
+        data=corpo,
+        content_type="application/json",
+        HTTP_STRIPE_SIGNATURE="sig",
+    )
+    assert r.status_code == 200
+    u.profile.refresh_from_db()
+    assert u.profile.plano == ESSENCIAL
+
+
 # ------------------------------------------ interruptor BILLING_ENFORCE
 @pytest.mark.django_db
 def test_gate_inerte_sem_enforce(django_user_model) -> None:
