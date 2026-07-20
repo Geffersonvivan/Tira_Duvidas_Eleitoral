@@ -35,7 +35,7 @@
 <div class="planos-wrap">
   <a class="planos-voltar" href="{% if user.is_authenticated %}/app/{% else %}/{% endif %}">← Voltar ao Tira-Dúvidas</a>
   <h1>Planos de acesso</h1>
-  <p class="planos-sub">Acesso único ao Tira-Dúvidas Eleitoral até <strong>{{ acesso_ate|date:"d/m/Y" }}</strong> (30 dias após a eleição).</p>
+  <p class="planos-sub">Acesso único ao Tira-Dúvidas Eleitoral até <strong>{{ acesso_ate|date:"d/m/Y" }}</strong> · sem mensalidade.</p>
 
   {% if sucesso %}<div class="banner ok">Pagamento confirmado! Seu acesso foi liberado. ✅</div>{% endif %}
   {% if cancelado %}<div class="banner warn">Checkout cancelado — nenhuma cobrança foi feita.</div>{% endif %}
