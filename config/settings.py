@@ -129,8 +129,8 @@ BILLING_ENABLED = bool(STRIPE_SECRET_KEY)
 # funciona sem limites, como hoje. Ligar (True) só quando o Stripe estiver
 # configurado, senão os usuários travam nas 3 perguntas sem como pagar.
 BILLING_ENFORCE = _env_bool("BILLING_ENFORCE", "False")
-# Fim do acesso do passe (fixo p/ todos) — 30 dias após a eleição de 04/10/2026.
-BILLING_ACESSO_ATE = os.environ.get("BILLING_ACESSO_ATE", "2026-11-03")
+# Fim do acesso do passe (fixo p/ todos). Eleição (1º turno): 04/10/2026.
+BILLING_ACESSO_ATE = os.environ.get("BILLING_ACESSO_ATE", "2026-10-05")
 # Consultoria jurídica: só CTA de WhatsApp (sem checkout). Formato E.164 sem "+".
 BILLING_WHATSAPP = os.environ.get("BILLING_WHATSAPP", "5549991031516")
 

@@ -19,9 +19,9 @@ User = get_user_model()
 
 
 def acesso_ate() -> datetime.datetime:
-    """Fim do acesso (fixo p/ todos): BILLING_ACESSO_ATE, default 2026-11-03
-    (30 dias após a eleição de 04/10/2026 — prazo da prestação de contas)."""
-    raw = getattr(settings, "BILLING_ACESSO_ATE", "2026-11-03")
+    """Fim do acesso (fixo p/ todos): BILLING_ACESSO_ATE, default 2026-10-05
+    (dia seguinte ao 1º turno de 04/10/2026)."""
+    raw = getattr(settings, "BILLING_ACESSO_ATE", "2026-10-05")
     d = datetime.date.fromisoformat(raw)
     return timezone.make_aware(datetime.datetime(d.year, d.month, d.day, 23, 59, 59))
 
