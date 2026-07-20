@@ -24,6 +24,9 @@
   a{color:inherit;text-decoration:none}
   .wrap{max-width:var(--wrap);margin:0 auto;padding:0 24px}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:15px;border-radius:12px;padding:13px 24px;cursor:pointer;border:0;transition:.16s;font-family:inherit}
+  .btn:focus{outline:none}
+  .btn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  .btn:active{transform:translateY(1px)}
   .btn-primary{background:var(--brand);color:#fff;box-shadow:var(--shadow)}
   .btn-primary:hover{background:var(--brand-ink)}
   .btn-ghost{background:transparent;color:var(--brand);border:1px solid var(--brand)}
@@ -58,6 +61,18 @@
   .tag.soon{background:var(--paper-2);color:var(--muted);border:1px solid var(--line)}
   .card h4{font-family:var(--serif);font-weight:500;font-size:19px;margin-bottom:6px}
   .card p{color:var(--ink-soft);font-size:14.5px}
+  .card.tool{padding:28px;display:flex;flex-direction:column;transition:transform .16s, box-shadow .16s}
+  .card.tool:hover{transform:translateY(-3px);box-shadow:0 1px 2px rgba(20,30,25,.04), 0 26px 50px -20px rgba(20,30,25,.26)}
+  .tool-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .tool-ico{width:46px;height:46px;border-radius:12px;background:var(--brand-soft);display:grid;place-items:center}
+  .tool-ico svg{width:24px;height:24px;color:var(--brand)}
+  .card.tool h4{font-size:20px;margin-bottom:8px}
+  .card.tool>p{font-size:15px;line-height:1.55}
+  .tool-feats{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:10px}
+  .tool-feats li{display:flex;gap:9px;align-items:flex-start;font-size:14px;color:var(--ink-soft);line-height:1.4}
+  .tool-feats li svg{flex:none;margin-top:2px;width:16px;height:16px;color:var(--brand)}
+  .tool-eg{margin-top:18px;font-size:13px;color:var(--muted);border-left:2px solid var(--brand);padding-left:11px}
+  .tool-eg b{color:var(--ink-soft);font-weight:600}
 
   /* Preço */
   .price-card{max-width:520px;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:36px;box-shadow:var(--shadow);text-align:center}
@@ -100,18 +115,36 @@
 
   <section class="block" id="casos">
     <div class="wrap">
-      <h3>Aplicações práticas</h3>
-      <p class="sub">Duas ferramentas no ar para o ciclo eleitoral de 2026.</p>
+      <h3>Duas ferramentas, uma campanha sem susto</h3>
+      <p class="sub">No ritmo da campanha não dá pra parar e abrir a resolução do TSE a cada dúvida. O TDE resolve na hora — fundamentado na legislação vigente, não em achismo.</p>
       <div class="grid">
-        <div class="card">
-          <span class="tag on">Disponível</span>
+        <div class="card tool">
+          <div class="tool-top">
+            <div class="tool-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+            <span class="tag on">Disponível</span>
+          </div>
           <h4>Perguntas eleitorais</h4>
-          <p>Direito, contabilidade e impulsionamento respondidos com base no RAG, citando a norma e a jurisprudência aplicáveis.</p>
+          <p>Pergunte como falaria com um especialista. Responde na hora, citando a norma e a jurisprudência do TSE que sustentam a resposta.</p>
+          <ul class="tool-feats">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Direito, contabilidade e impulsionamento num só lugar</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Cita a resolução, a lei e o precedente — dá pra conferir a fonte</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Base sempre atualizada, com mitigação de alucinações</li>
+          </ul>
+          <p class="tool-eg"><b>Ex.:</b> "Posso impulsionar as publicações do meu candidato no Instagram?"</p>
         </div>
-        <div class="card">
-          <span class="tag on">Disponível</span>
+        <div class="card tool">
+          <div class="tool-top">
+            <div class="tool-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
+            <span class="tag on">Disponível</span>
+          </div>
           <h4>Validador de santinho</h4>
-          <p>Upload da peça gráfica para auditar CNPJ de campanha, tiragem, dados obrigatórios e conformidade com a legislação.</p>
+          <p>Suba a peça gráfica e receba um parecer de conformidade em segundos — <b>antes de imprimir</b> e correr o risco de uma representação.</p>
+          <ul class="tool-feats">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Confere CNPJ de campanha, tiragem e dados obrigatórios</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Aponta o que está irregular e a base legal de cada exigência</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Aceita JPG, PNG e PDF — várias peças de uma vez</li>
+          </ul>
+          <p class="tool-eg"><b>Evita</b> multa e apreensão por material fora das regras da Justiça Eleitoral.</p>
         </div>
       </div>
     </div>

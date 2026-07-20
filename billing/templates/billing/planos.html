@@ -16,7 +16,10 @@
   .plano-feats { list-style: none; padding: 0; margin: 0 0 20px; flex: 1; }
   .plano-feats li { display: flex; gap: 8px; padding: 5px 0; color: #374151; font-size: .95rem; }
   .plano-feats li::before { content: "✓"; color: #1f6f54; font-weight: 800; }
-  .plano-btn { display: block; text-align: center; padding: 12px; border-radius: 10px; font-weight: 700; text-decoration: none; }
+  .plano-btn { display: block; text-align: center; padding: 12px; border-radius: 10px; font-weight: 700; text-decoration: none; transition: background .16s, transform .1s; }
+  .plano-btn:focus { outline: none; }
+  .plano-btn:focus-visible { outline: 2px solid #1f6f54; outline-offset: 2px; }
+  .plano-btn:active { transform: translateY(1px); }
   .btn-pago { background: #1f6f54; color: #fff; }
   .btn-pago:hover { background: #185740; }
   .btn-wpp { background: #25d366; color: #fff; }
