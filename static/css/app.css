@@ -9,13 +9,21 @@
   --warn:#8f6410; --warn-bg:#f7edd6;
   --bad:#a5342f; --bad-bg:#f6e4e1;
   --neutral:#5a6570; --neutral-bg:#ebeeef;
+  --juris:#5b3fa8; --juris-bg:#ece7f7;
   --r:16px; --r-sm:10px;
+  --shadow-sm:0 1px 2px rgba(20,30,25,.05), 0 6px 16px -8px rgba(20,30,25,.14);
   --shadow:0 1px 2px rgba(20,30,25,.04), 0 12px 34px -14px rgba(20,30,25,.14);
+  --shadow-lg:0 2px 4px rgba(20,30,25,.06), 0 34px 60px -24px rgba(20,30,25,.30);
+  /* curvas — mola (leve overshoot) para momentum; press rápido no toque (§4/§7 Apple) */
+  --ease-out:cubic-bezier(.22,.61,.36,1);
+  --ease-spring:cubic-bezier(.34,1.32,.5,1);
+  --ease-press:cubic-bezier(.4,0,.2,1);
   --mono:'Spline Sans Mono',ui-monospace,monospace;
   --serif:'Fraunces',Georgia,serif;
   --wrap:920px;
 }
 *{box-sizing:border-box}
+body{-webkit-tap-highlight-color:transparent}
 html,body{margin:0}
 body{
   font-family:'Inter',system-ui,sans-serif;
@@ -32,14 +40,15 @@ a{color:var(--brand)}
 :focus-visible{outline:2px solid var(--brand); outline-offset:2px; border-radius:4px}
 
 /* ---------- Header ---------- */
-header.top{border-bottom:1px solid var(--line); background:rgba(236,238,232,.82); backdrop-filter:blur(10px); position:sticky; top:0; z-index:10}
+header.top{border-bottom:1px solid var(--line); background:rgba(236,238,232,.72); backdrop-filter:blur(18px) saturate(180%); -webkit-backdrop-filter:blur(18px) saturate(180%); position:sticky; top:0; z-index:10}
 /* .top-inner sem position:relative de propósito: o .conta se ancora no
    header.top (sticky = largura total), indo ao canto direito real da viewport. */
 .top-inner{display:flex; align-items:center; justify-content:center; max-width:var(--wrap); margin:0 auto; padding:20px 24px}
 /* ---------- Conta (menu do usuário) ---------- */
 .conta{position:absolute; right:24px; top:50%; transform:translateY(-50%)}
-.conta-trigger{display:flex; align-items:center; gap:9px; padding:4px 12px 4px 4px; border:1px solid var(--line); border-radius:999px; background:var(--surface); cursor:pointer; font-family:inherit; transition:border-color .15s, background .15s}
+.conta-trigger{display:flex; align-items:center; gap:9px; padding:4px 12px 4px 4px; border:1px solid var(--line); border-radius:999px; background:var(--surface); cursor:pointer; font-family:inherit; transition:border-color .15s var(--ease-out), background .15s var(--ease-out), transform .16s var(--ease-press)}
 .conta-trigger:hover{border-color:var(--brand); background:var(--brand-soft)}
+.conta-trigger:active{transform:scale(.97)}
 .conta-foto{width:30px; height:30px; border-radius:50%; object-fit:cover; flex:none; box-shadow:0 0 0 2px var(--brand-soft)}
 .conta-iniciais{width:30px; height:30px; border-radius:50%; flex:none; display:grid; place-items:center; background:var(--brand); color:#fff; font-size:12.5px; font-weight:600}
 .conta-nome{font-size:14px; font-weight:500; color:var(--ink); max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
@@ -69,15 +78,16 @@ body.app-auth.sidebar-aberta{padding-left:288px} /* desktop empurra; mobile sobr
 
 .sidebar{position:fixed; left:0; top:0; bottom:0; z-index:40; display:flex; align-items:stretch}
 /* Trilho: coluna de ícones sempre visível (no desktop). */
-.rail{width:56px; flex:none; background:var(--surface); border-right:1px solid var(--line); display:flex; flex-direction:column; align-items:center; gap:4px; padding:14px 0}
-.rail-btn{position:relative; width:40px; height:40px; flex:none; display:grid; place-items:center; border:0; border-radius:11px; background:transparent; color:var(--ink-soft); cursor:pointer; transition:background .13s, color .13s}
+.rail{width:56px; flex:none; background:rgba(244,245,240,.62); backdrop-filter:blur(12px) saturate(160%); -webkit-backdrop-filter:blur(12px) saturate(160%); border-right:1px solid var(--line); display:flex; flex-direction:column; align-items:center; gap:4px; padding:14px 0}
+.rail-btn{position:relative; width:40px; height:40px; flex:none; display:grid; place-items:center; border:0; border-radius:11px; background:transparent; color:var(--ink-soft); cursor:pointer; transition:background .13s var(--ease-out), color .13s var(--ease-out), transform .16s var(--ease-press)}
 .rail-btn:hover{background:var(--brand-soft); color:var(--brand)}
+.rail-btn:active{transform:scale(.9)}
 .rail-btn.rail-ativo{background:var(--brand-soft); color:var(--brand-ink)}
 .rail-btn svg{width:20px; height:20px}
 .rail-sep{width:22px; height:1px; background:var(--line); margin:5px 0}
-/* Tooltip do trilho (aparece à direita, instantâneo). */
-.rail-btn::after{content:attr(data-tip); position:absolute; left:calc(100% + 12px); top:50%; transform:translateY(-50%); white-space:nowrap; background:var(--ink); color:#fff; font-size:12px; padding:5px 9px; border-radius:7px; opacity:0; pointer-events:none; transition:opacity .12s; z-index:70}
-.rail-btn:hover::after{opacity:1}
+/* Tooltip do trilho: surge da origem (esquerda) com leve mola (§7 spatial). */
+.rail-btn::after{content:attr(data-tip); position:absolute; left:calc(100% + 12px); top:50%; transform:translateY(-50%) scale(.88); transform-origin:left center; white-space:nowrap; background:var(--ink); color:#fff; font-size:12px; padding:5px 9px; border-radius:7px; opacity:0; pointer-events:none; transition:opacity .13s var(--ease-out), transform .2s var(--ease-spring); z-index:70; box-shadow:var(--shadow-sm)}
+.rail-btn:hover::after{opacity:1; transform:translateY(-50%) scale(1)}
 body.sidebar-aberta .rail-btn::after{display:none} /* painel aberto: sem tooltips sobre a lista */
 
 /* Painel de conversas: some (largura 0) quando fechado; abre com transição. */
@@ -120,10 +130,11 @@ a.brand:hover{opacity:.82}
 
 /* ---------- Tabs (segmented control) ---------- */
 .tabs{display:inline-flex; gap:4px; margin:30px 0 0; padding:4px; background:var(--paper-2); border:1px solid var(--line); border-radius:12px}
-.tab{appearance:none; border:0; background:none; cursor:pointer; font-family:inherit; font-size:14px; font-weight:500; color:var(--muted); padding:9px 15px; border-radius:9px; display:flex; align-items:center; gap:8px; transition:color .15s, background .15s}
+.tab{appearance:none; border:0; background:none; cursor:pointer; font-family:inherit; font-size:14px; font-weight:500; color:var(--muted); padding:9px 15px; border-radius:9px; display:flex; align-items:center; gap:8px; transition:color .2s var(--ease-out), background .32s var(--ease-spring), box-shadow .32s var(--ease-out), transform .16s var(--ease-press)}
 .tab .ico{width:17px; height:17px; opacity:.85}
 .tab:hover{color:var(--ink)}
-.tab[aria-selected="true"]{background:var(--surface); color:var(--brand); box-shadow:0 1px 2px rgba(20,30,25,.08)}
+.tab:active{transform:scale(.97)}
+.tab[aria-selected="true"]{background:var(--surface); color:var(--brand); box-shadow:var(--shadow-sm)}
 
 main{padding:22px 0 72px}
 .panel[hidden]{display:none !important}   /* vence o display:flex do estado chat-ativo */
@@ -157,7 +168,7 @@ body.chat-ativo .panel{flex:1 1 auto; min-height:0}
 body.chat-ativo .panel[data-panel="perguntas"]{display:flex; flex-direction:column}
 body.chat-ativo .panel[data-panel="perguntas"] .card{flex:0 1 auto; min-height:0; overflow:hidden}
 body.chat-ativo .panel[data-panel="material"]{overflow-y:auto}
-body.chat-ativo .chat{flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain}
+body.chat-ativo .chat{flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 20px, #000 calc(100% - 8px), transparent 100%); mask-image:linear-gradient(to bottom, transparent 0, #000 20px, #000 calc(100% - 8px), transparent 100%)}
 body.chat-ativo footer{flex:none}
 .msg{display:flex; gap:14px}
 .avatar{width:34px; height:34px; border-radius:10px; flex:none; display:grid; place-items:center; font-size:12px; font-weight:600}
@@ -196,7 +207,7 @@ body.chat-ativo footer{flex:none}
 .src+.src{margin-top:2px}
 .src .tag{font-family:var(--mono); font-weight:600; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; padding:3px 8px; border-radius:5px; white-space:nowrap}
 .tag.norma{background:var(--brand); color:#fff}
-.tag.jurisprudencia{background:#2d2742; color:#fff}
+.tag.jurisprudencia{background:var(--juris-bg); color:var(--juris)}
 .src .cite{font-family:var(--mono); font-size:12.5px; line-height:1.45; color:var(--ink-soft)}
 
 .disclaimer{margin-top:16px; font-size:12.5px; color:var(--muted); padding:11px 14px; background:var(--paper-2); border:1px solid var(--line); border-radius:var(--r-sm)}
@@ -210,9 +221,10 @@ body.chat-ativo footer{flex:none}
 .composer textarea::placeholder{color:var(--muted)}
 .composer textarea:focus{outline:none; border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-soft)}
 .composer-row{display:flex; justify-content:flex-end; align-items:center}
-.send{background:var(--brand); color:#fff; border:0; border-radius:12px; padding:0 22px; height:44px; font-family:inherit; font-weight:600; font-size:14px; cursor:pointer; flex:none; transition:background .15s}
-.send:hover{background:var(--brand-ink)}
-.send:disabled{opacity:.5; cursor:default}
+.send{background:var(--brand); color:#fff; border:0; border-radius:12px; padding:0 22px; height:44px; font-family:inherit; font-weight:600; font-size:14px; cursor:pointer; flex:none; box-shadow:var(--shadow-sm); transition:background .18s var(--ease-out), transform .14s var(--ease-press), box-shadow .2s var(--ease-out)}
+.send:hover{background:var(--brand-ink); box-shadow:var(--shadow)}
+.send:active{transform:scale(.94)}
+.send:disabled{opacity:.5; cursor:default; transform:none; box-shadow:none}
 
 /* Estado ativo: composer docado no rodapé do card, com separador no topo. */
 body.chat-ativo .composer{border-top:1px solid var(--line)}
@@ -231,12 +243,14 @@ body:not(.chat-ativo) .composer textarea:focus{box-shadow:none}
 
 .suggests{display:flex; flex-wrap:wrap; gap:8px; padding:0 20px 18px}
 body:not(.chat-ativo) .suggests{justify-content:center; padding:16px 4px 0}
-.chip{font-family:var(--mono); font-size:12px; color:var(--ink-soft); background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:7px 13px; cursor:pointer; transition:.15s}
+.chip{font-family:var(--mono); font-size:12px; color:var(--ink-soft); background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:7px 13px; cursor:pointer; transition:border-color .15s var(--ease-out), color .15s var(--ease-out), background .15s var(--ease-out), transform .16s var(--ease-press)}
 .chip:hover{border-color:var(--brand); color:var(--brand); background:var(--brand-soft)}
+.chip:active{transform:scale(.95)}
 
 /* ---------- Upload (Serviço 2) ---------- */
-.drop{border:1.5px dashed #c8ccbf; border-radius:var(--r); background:var(--paper-2); padding:46px 24px; text-align:center; cursor:pointer; transition:.18s}
-.drop:hover{border-color:var(--brand); background:var(--brand-soft)}
+.drop{border:1.5px dashed #c5cabc; border-radius:var(--r); background:var(--paper-2); padding:46px 24px; text-align:center; cursor:pointer; transition:border-color .2s var(--ease-out), background .2s var(--ease-out), transform .22s var(--ease-spring)}
+.drop:hover{border-color:var(--brand); background:var(--brand-soft); transform:translateY(-2px)}
+.drop:active{transform:translateY(0) scale(.995)}
 .drop .big{font-family:var(--serif); font-weight:500; font-size:19px; margin:14px 0 4px}
 .drop small{color:var(--muted); font-size:13px}
 .formats{display:flex; gap:8px; justify-content:center; margin-top:16px; flex-wrap:wrap}
@@ -281,7 +295,7 @@ body.chat-ativo .suggests{display:none}
 .panel.com-parecer .drop small,
 .panel.com-parecer .drop .formats{display:none}
 .panel.com-parecer .drop::after{content:"Enviar outra peça"; color:var(--brand); font-weight:600; font-size:14px}
-footer{border-top:1px solid var(--line); padding:24px 0; color:var(--muted); font-size:12.5px}
+footer{border-top:1px solid var(--line); padding:24px 0; color:var(--muted); font-size:12.5px; background:rgba(236,238,232,.72); backdrop-filter:blur(18px) saturate(180%); -webkit-backdrop-filter:blur(18px) saturate(180%)}
 footer .wrap{font-family:var(--mono); letter-spacing:.02em; text-align:center}
 
 @media(max-width:600px){
@@ -295,4 +309,13 @@ footer .wrap{font-family:var(--mono); letter-spacing:.02em; text-align:center}
 }
 @media(prefers-reduced-motion:reduce){
   *{animation:none !important; transition:none !important}
+}
+/* Transparência reduzida: materiais viram superfícies sólidas (§14 Apple) */
+@media(prefers-reduced-transparency:reduce){
+  header.top,footer{background:var(--paper); backdrop-filter:none; -webkit-backdrop-filter:none}
+  .rail{background:var(--surface); backdrop-filter:none; -webkit-backdrop-filter:none}
+}
+/* Mais contraste: linhas e texto secundário mais firmes */
+@media(prefers-contrast:more){
+  :root{--line:#b9c0b6; --muted:#5c655f; --ink-soft:#2a332e}
 }
