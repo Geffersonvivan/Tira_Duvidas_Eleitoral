@@ -1,21 +1,18 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tira-Dúvidas Eleitoral — Inteligência jurídica para a campanha de 2026</title>
+<title>Tira-Dúvidas Eleitoral — mock-up (Apple design)</title>
 <meta name="description" content="Assistente jurídico eleitoral com IA: direito, contabilidade de campanha e impulsionamento, com base na legislação e jurisprudência vigentes.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;450;500;600&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
 <style>
   /* ─────────────────────────────────────────────────────────
-     Design tokens — identidade da marca preservada, refinada
-     com a linguagem Apple: materiais translúcidos, profundidade
-     em camadas, tipografia com tracking por tamanho, springs
-     aproximados por cubic-bezier espelhado.
+     Design tokens — identidade da marca preservada, refinada.
+     Springs aproximados por cubic-bezier (§4, §7): a curva de
+     entrada e a de retorno são espelhadas nos hovers/presses.
   ───────────────────────────────────────────────────────── */
   :root{
     --ink:#18211d; --ink-soft:#454f49; --muted:#79837c;
@@ -26,11 +23,13 @@
     --sans:'Inter',system-ui,-apple-system,sans-serif;
     --mono:'Spline Sans Mono',ui-monospace,monospace;
     --wrap:1120px; --r:18px; --r-lg:22px;
+    /* profundidade em camadas (§12): sombra combina contato + elevação */
     --shadow-sm:0 1px 2px rgba(20,30,25,.05), 0 6px 16px -8px rgba(20,30,25,.14);
     --shadow:0 1px 2px rgba(20,30,25,.05), 0 20px 46px -20px rgba(20,30,25,.22);
     --shadow-lg:0 2px 4px rgba(20,30,25,.06), 0 34px 60px -24px rgba(20,30,25,.30);
+    /* curvas espelhadas — entrada suave / saída suave (§7) */
     --ease-out:cubic-bezier(.22,.61,.36,1);
-    --ease-spring:cubic-bezier(.34,1.32,.5,1);
+    --ease-spring:cubic-bezier(.34,1.32,.5,1); /* leve overshoot p/ momentum */
     --ease-press:cubic-bezier(.4,0,.2,1);
   }
 
@@ -41,6 +40,7 @@
     line-height:1.6;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
     overflow-x:hidden;
   }
+  /* textura de fundo em camadas — halos suaves atrás do conteúdo (§12 profundidade) */
   body::before{
     content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
     background:
@@ -50,7 +50,7 @@
   a{color:inherit;text-decoration:none}
   .wrap{max-width:var(--wrap);margin:0 auto;padding:0 24px}
 
-  /* Botões — feedback no pointer-down, instantâneo */
+  /* ── Botões — feedback no pointer-down, instantâneo (§1, §10) ── */
   .btn{
     display:inline-flex;align-items:center;justify-content:center;gap:8px;
     font-family:inherit;font-weight:600;font-size:15px;letter-spacing:-.01em;
@@ -60,7 +60,7 @@
   }
   .btn:focus{outline:none}
   .btn:focus-visible{outline:2.5px solid var(--brand);outline-offset:3px}
-  .btn:active{transform:scale(.96)}
+  .btn:active{transform:scale(.96)}          /* resposta na pressão, não no release */
   .btn-primary{background:var(--brand);color:#fff;box-shadow:var(--shadow-sm)}
   .btn-primary:hover{background:var(--brand-ink);box-shadow:var(--shadow);transform:translateY(-1px)}
   .btn-primary:active{transform:scale(.96)}
@@ -69,7 +69,7 @@
   .btn-wpp{background:#25d366;color:#fff;box-shadow:var(--shadow-sm)}
   .btn-wpp:hover{background:#1fb457;transform:translateY(-1px);box-shadow:var(--shadow)}
 
-  /* Header translúcido — material flutuante, conteúdo passa por baixo */
+  /* ── Header translúcido — material flutuante, conteúdo passa por baixo (§12) ── */
   header.top{position:sticky;top:0;z-index:20;transition:box-shadow .3s var(--ease-out)}
   header.top::before{
     content:"";position:absolute;inset:0;z-index:-1;
@@ -92,7 +92,7 @@
   .brand h1{font-family:var(--serif);font-weight:600;font-size:19px;letter-spacing:-.02em;line-height:1.1}
   .brand span{display:block;font-size:12px;color:var(--muted);font-weight:450;letter-spacing:0}
 
-  /* Hero */
+  /* ── Hero ── */
   .hero{text-align:center;padding:96px 0 40px;position:relative}
   .kicker{
     display:inline-flex;align-items:center;gap:7px;
@@ -102,6 +102,7 @@
     backdrop-filter:blur(8px);border-radius:999px;padding:7px 15px;margin-bottom:26px;
   }
   .kicker .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  /* Display type: tracking NEGATIVO cresce com o tamanho, leading apertado (§15) */
   .hero h2{
     font-family:var(--serif);font-weight:600;
     font-size:clamp(34px,5.6vw,58px);line-height:1.06;letter-spacing:-.028em;
@@ -121,10 +122,11 @@
   .facts b{color:var(--ink);font-weight:600}
   .facts .mk{color:var(--brand);flex:none}
 
-  /* Cartão-demonstração flutuante — profundidade + mostra o produto */
+  /* Cartão-demonstração flutuante — dá profundidade e mostra o produto (§8, §12) */
   .hero-demo{
     max-width:560px;margin:56px auto 0;text-align:left;position:relative;
-    background:var(--surface);border-radius:var(--r-lg);overflow:hidden;
+    background:var(--surface);border-radius:var(--r-lg);
+    box-shadow:var(--shadow-lg);overflow:hidden;
     box-shadow:0 2px 4px rgba(20,30,25,.06), 0 40px 80px -30px rgba(20,30,25,.34);
   }
   .hero-demo .demo-bar{
@@ -143,7 +145,7 @@
     font-family:var(--mono);font-size:11.5px;color:var(--brand);letter-spacing:.01em;line-height:1.5;
   }
 
-  /* Seções */
+  /* ── Seções ── */
   section.block{padding:76px 0;position:relative}
   section.block::before{
     content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);
@@ -158,10 +160,10 @@
 
   .grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;max-width:920px;margin:0 auto}
 
-  /* Cartões — elevam com curva de mola no hover, comprimem na pressão */
+  /* Cartões — elevam com curva de mola no hover, comprimem na pressão (§4) */
   .card{
     background:var(--surface);border-radius:var(--r);padding:28px;
-    box-shadow:inset 0 0 0 1px var(--line), var(--shadow-sm);
+    box-shadow:var(--shadow-sm);box-shadow:inset 0 0 0 1px var(--line), var(--shadow-sm);
     display:flex;flex-direction:column;
     transition:transform .34s var(--ease-spring), box-shadow .34s var(--ease-out);
     will-change:transform;
@@ -191,7 +193,7 @@
   }
   .tool-eg b{color:var(--ink-soft);font-weight:600}
 
-  /* Preços */
+  /* ── Preços ── */
   .price-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;max-width:1120px;margin:0 auto;align-items:stretch}
   .price-card{
     background:var(--surface);border-radius:var(--r-lg);padding:34px;text-align:center;
@@ -222,13 +224,15 @@
   footer::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:min(var(--wrap),100% - 48px);height:1px;background:linear-gradient(90deg,transparent,var(--line) 20%,var(--line) 80%,transparent)}
   footer .wrap{font-family:var(--mono);letter-spacing:.02em;text-align:center}
 
-  /* Materialização por scroll — sobe + surge uma vez, curvas espelhadas */
+  /* ─── Materialização por scroll (§12 "materialize, don't fade"; §7 caminhos) ───
+     Sobe + surge; a curva de saída espelha a de entrada. */
   .reveal{opacity:0;transform:translateY(26px) scale(.985);transition:opacity .7s var(--ease-out), transform .7s var(--ease-out)}
   .reveal.in{opacity:1;transform:none}
   .reveal[data-d="1"]{transition-delay:.06s}
   .reveal[data-d="2"]{transition-delay:.12s}
   .reveal[data-d="3"]{transition-delay:.18s}
 
+  /* Mobile */
   @media(max-width:720px){
     .hero{padding:72px 0 24px}
     .brand span{display:none}
@@ -236,7 +240,7 @@
     .facts{gap:12px 22px;font-size:13px}
   }
 
-  /* Acessibilidade */
+  /* ─── Acessibilidade (§14) ─── */
   @media (prefers-reduced-motion: reduce){
     html{scroll-behavior:auto}
     *,*::before,*::after{transition-duration:.001ms !important;animation-duration:.001ms !important}
@@ -266,7 +270,7 @@
         <span>Direito, contabilidade e impulsionamento eleitoral</span>
       </div>
     </div>
-    <button class="btn btn-ghost" id="btn-login" onclick="tdeLogin()">Área do cliente</button>
+    <button class="btn btn-ghost">Área do cliente</button>
   </div>
 </header>
 
@@ -276,7 +280,7 @@
     <h2 class="reveal" data-d="1">Tire qualquer dúvida da campanha <em>antes</em> que ela vire problema</h2>
     <p class="lede reveal" data-d="2">Direito eleitoral, contabilidade de campanha e impulsionamento pago — respondidos na hora e sempre com a norma e a jurisprudência que sustentam a resposta. Menos achismo, menos risco de representação, multa ou peça apreendida.</p>
     <div class="cta-row reveal" data-d="3">
-      <button class="btn btn-primary" id="btn-cta" onclick="tdeSignUp()">Acessar agora</button>
+      <button class="btn btn-primary">Acessar agora</button>
       <a class="btn btn-ghost" href="#precos">Ver planos</a>
     </div>
     <div class="facts reveal" data-d="3">
@@ -340,34 +344,34 @@
       <div class="price-grid">
         <!-- Essencial -->
         <div class="price-card reveal" data-d="1">
-          <div class="plan">{{ essencial.nome }}</div>
-          <div class="price">R$ {{ essencial.preco|floatformat:0 }}</div>
-          <div class="price-note">Acesso único até {{ acesso_ate|date:"d/m/Y" }} · sem mensalidade</div>
+          <div class="plan">Essencial</div>
+          <div class="price">R$ 349</div>
+          <div class="price-note">Acesso único até 05/10/2026 · sem mensalidade</div>
           <ul>
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> {{ essencial.perguntas }} perguntas ao sistema RAG no período</li>
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> {{ essencial.materiais }} análises de peça/material gráfico</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> 300 perguntas ao sistema RAG no período</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> 50 análises de peça/material gráfico</li>
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Cobre até 30 dias após a eleição, prazo da prestação de contas</li>
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Legislação e resoluções do TSE integradas e atualizadas</li>
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Respostas fundamentadas, com mitigação de alucinações</li>
           </ul>
-          <button class="btn btn-ghost" style="width:100%" onclick="tdeSignUp()">Começar agora</button>
+          <button class="btn btn-ghost" style="width:100%">Começar agora</button>
         </div>
         <!-- Profissional -->
         <div class="price-card destaque reveal" data-d="2">
           <div class="price-badge">Mais completo</div>
-          <div class="plan">{{ pro.nome }}</div>
-          <div class="price">R$ {{ pro.preco|floatformat:0 }}</div>
-          <div class="price-note">Acesso único até {{ acesso_ate|date:"d/m/Y" }} · sem mensalidade</div>
+          <div class="plan">Profissional</div>
+          <div class="price">R$ 499</div>
+          <div class="price-note">Acesso único até 05/10/2026 · sem mensalidade</div>
           <ul>
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> {{ pro.perguntas }} perguntas ao sistema RAG no período</li>
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> {{ pro.materiais }} análises de peça/material gráfico</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> 600 perguntas ao sistema RAG no período</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> 100 análises de peça/material gráfico</li>
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Cobre até 30 dias após a eleição, prazo da prestação de contas</li>
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Legislação e resoluções do TSE integradas e atualizadas</li>
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Maior volume para uso intenso de campanha</li>
           </ul>
-          <button class="btn btn-primary" style="width:100%" onclick="tdeSignUp()">Assinar Profissional</button>
+          <button class="btn btn-primary" style="width:100%">Assinar Profissional</button>
         </div>
-        <!-- Consultoria com especialista -->
+        <!-- Consultoria -->
         <div class="price-card consultoria reveal" data-d="3">
           <div class="price-badge wpp">Atendimento humano</div>
           <div class="plan">Consultoria com especialista</div>
@@ -379,8 +383,7 @@
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> <strong>Gestor de tráfego</strong> — impulsionamento e mídia paga dentro das regras do TSE</li>
           </ul>
           <p class="price-pitch">A IA tira a dúvida na hora. Quando o caso aperta, um humano assume — direto no seu WhatsApp.</p>
-          <a class="btn btn-wpp" style="width:100%" target="_blank" rel="noopener"
-             href="https://wa.me/{{ whatsapp }}?text=Ol%C3%A1%2C%20quero%20falar%20com%20um%20especialista%20%28advogado%2C%20contador%20ou%20gestor%20de%20tr%C3%A1fego%29%20sobre%20a%20campanha.">Falar com um especialista</a>
+          <a class="btn btn-wpp" style="width:100%" href="#">Falar com um especialista</a>
         </div>
       </div>
     </div>
@@ -390,7 +393,8 @@
 <footer><div class="wrap">Tira-Dúvidas Eleitoral · TDE · respostas fundamentadas em norma e jurisprudência vigentes.</div></footer>
 
 <script>
-  /* Materialização por scroll — surge uma vez; respeita movimento reduzido. */
+  /* Materialização por scroll — surge uma vez, sem loop (§8, §11, §14).
+     Só anima quando o usuário não pediu movimento reduzido. */
   (function(){
     var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     var els = document.querySelectorAll('.reveal');
@@ -404,60 +408,13 @@
       }, { threshold:.14, rootMargin:'0px 0px -8% 0px' });
       els.forEach(function(el){ io.observe(el); });
     }
+
+    /* Scroll edge effect — a borda do header só aparece quando há conteúdo por baixo (§12). */
     var header = document.querySelector('header.top');
     var onScroll = function(){ header.classList.toggle('scrolled', window.scrollY > 6); };
     onScroll();
     addEventListener('scroll', onScroll, { passive:true });
   })();
-</script>
-
-<script>window.clerkPublishableKey = "{{ CLERK_PUBLISHABLE_KEY }}";</script>
-<script async crossorigin="anonymous"
-  data-clerk-publishable-key="{{ CLERK_PUBLISHABLE_KEY }}"
-  src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
-  type="text/javascript"></script>
-<script type="module">
-  import { ptBR } from 'https://cdn.jsdelivr.net/npm/@clerk/localizations/dist/pt-BR.mjs';
-  const AUTH_SYNC = '/auth-sync/';
-
-  // Sem Clerk configurado, os CTAs levam direto à ferramenta (/app/).
-  window.tdeLogin = function () {
-    if (window.Clerk?.openSignIn) {
-      window.Clerk.openSignIn({ forceRedirectUrl: AUTH_SYNC, signUpForceRedirectUrl: AUTH_SYNC });
-    } else {
-      location.href = '/app/';
-    }
-  };
-  window.tdeSignUp = function () {
-    if (window.Clerk?.openSignUp) {
-      window.Clerk.openSignUp({ forceRedirectUrl: AUTH_SYNC, signInForceRedirectUrl: AUTH_SYNC });
-    } else {
-      location.href = '/app/';
-    }
-  };
-  async function goToApp() {
-    try {
-      const token = await window.Clerk.session.getToken();
-      if (token) {
-        const https = location.protocol === 'https:';
-        document.cookie = `__session=${token}; path=/; max-age=3600; SameSite=Lax;${https ? ' Secure' : ''}`;
-      }
-    } catch (e) {}
-    location.href = '/app/';
-  }
-
-  {% if CLERK_PUBLISHABLE_KEY %}
-  window.addEventListener('load', async function () {
-    if (!window.Clerk) return;
-    await window.Clerk.load({ localization: ptBR });
-    if (window.Clerk.user) {
-      document.querySelectorAll('#btn-login, #btn-cta').forEach(b => {
-        b.textContent = 'Acessar TDE';
-        b.onclick = (e) => { e.preventDefault(); goToApp(); };
-      });
-    }
-  });
-  {% endif %}
 </script>
 </body>
 </html>
