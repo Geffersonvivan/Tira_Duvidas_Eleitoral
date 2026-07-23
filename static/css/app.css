@@ -43,7 +43,8 @@ a{color:var(--brand)}
 header.top{border-bottom:1px solid var(--line); background:rgba(236,238,232,.72); backdrop-filter:blur(18px) saturate(180%); -webkit-backdrop-filter:blur(18px) saturate(180%); position:sticky; top:0; z-index:10}
 /* .top-inner sem position:relative de propósito: o .conta se ancora no
    header.top (sticky = largura total), indo ao canto direito real da viewport. */
-.top-inner{display:flex; align-items:center; justify-content:space-between; max-width:var(--wrap); margin:0 auto; padding:14px 24px}
+/* Header em largura total: marca à esquerda, conta à direita — com respiro. */
+.top-inner{display:flex; align-items:center; justify-content:space-between; max-width:none; margin:0; padding:18px 34px}
 /* ---------- Conta (menu do usuário) ---------- */
 .top-right{display:flex; align-items:center; gap:14px}
 .conta{position:relative}
@@ -52,9 +53,8 @@ header.top{border-bottom:1px solid var(--line); background:rgba(236,238,232,.72)
 .quota b{color:var(--brand); font-weight:600}
 .quota .pip{width:7px; height:7px; border-radius:50%; background:var(--ok); box-shadow:0 0 0 3px var(--ok-bg); flex:none}
 /* Faixa do chip, logo abaixo da linha do header (não disputa espaço com a marca). */
-.topbar-sub{background:rgba(236,238,232,.5); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px)}
-.topbar-sub .wrap{display:flex; justify-content:flex-end; padding-top:9px; padding-bottom:9px}
-@media(max-width:600px){.topbar-sub .wrap{justify-content:center} .quota{white-space:normal; text-align:center}}
+.topbar-sub .wrap{max-width:none; margin:0; display:flex; justify-content:flex-end; padding:12px 34px}
+@media(max-width:600px){.topbar-sub .wrap{justify-content:center; padding:12px 20px} .quota{white-space:normal; text-align:center}}
 .conta-trigger{display:flex; align-items:center; gap:9px; padding:4px 12px 4px 4px; border:1px solid var(--line); border-radius:999px; background:var(--surface); cursor:pointer; font-family:inherit; transition:border-color .15s var(--ease-out), background .15s var(--ease-out), transform .16s var(--ease-press)}
 .conta-trigger:hover{border-color:var(--brand); background:var(--brand-soft)}
 .conta-trigger:active{transform:scale(.97)}
@@ -254,7 +254,7 @@ body.chat-ativo .composer{margin-top:14px}
 /* Estado vazio (1º acesso): a caixa vira uma "folha" flutuante única, ao
    estilo do Claude — título de saudação acima, box arredondado com o texto no
    topo e o botão no canto inferior-direito, chips centralizados abaixo. */
-.greeting{text-align:center; font-family:var(--serif); font-weight:500; font-size:30px; letter-spacing:-.01em; margin:6px 0 22px; color:var(--ink)}
+.greeting{text-align:center; font-family:var(--serif); font-weight:500; font-size:30px; letter-spacing:-.01em; margin:16px 0 30px; color:var(--ink)}
 body.chat-ativo .greeting{display:none}
 body:not(.chat-ativo) .panel[data-panel="perguntas"]{max-width:920px; margin:0 auto}
 body:not(.chat-ativo) .panel[data-panel="perguntas"] .card{border:0; box-shadow:none; background:transparent}
