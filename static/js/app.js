@@ -38,8 +38,23 @@ document.querySelectorAll(".tab").forEach((tab) => {
       "chat-ativo",
       alvo === "perguntas" && chatEl.childElementCount > 0
     );
+    moverPilula();
   });
 });
+
+// Pílula deslizante do segmented control: segue a aba ativa (mola definida no CSS).
+const tabsEl = document.querySelector(".tabs");
+const tabPill = document.querySelector(".tab-pill");
+function moverPilula() {
+  if (!tabsEl || !tabPill) return;
+  const ativo = tabsEl.querySelector('.tab[aria-selected="true"]');
+  if (!ativo) return;
+  tabPill.style.width = ativo.offsetWidth + "px";
+  tabPill.style.transform = "translateX(" + (ativo.offsetLeft - 4) + "px)";
+}
+moverPilula();
+window.addEventListener("load", moverPilula);
+window.addEventListener("resize", moverPilula);
 
 // ------------------------------------------------------- Serviço 1: perguntas
 const chat = document.getElementById("chat");
@@ -256,7 +271,7 @@ function fontesHTML(fontes) {
         `<div class="src"><span class="tag ${esc(f.tipo)}">${
           f.tipo === "jurisprudencia" ? "Jurisprudência" : "Norma"
         }</span><span class="cite">${esc(f.titulo)}${
-          f.vigente ? " · vigente" : ""
+          f.vigente ? ' <span class="vig">· vigente</span>' : ""
         }</span></div>`
     )
     .join("");

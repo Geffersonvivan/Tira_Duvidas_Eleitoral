@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;450;500;600&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
-<link rel="stylesheet" href="{% static 'css/app.css' %}?v=30">
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=34">
 </head>
 <body{% if user.is_authenticated %} class="app-auth"{% endif %}>
 <header class="top">
@@ -24,6 +24,13 @@
         <span>Direito, contabilidade e impulsionamento eleitoral</span>
       </div>
     </a>
+    <div class="top-right">
+      {% if plano_nome %}
+      <div class="quota" aria-label="Cota do passe">
+        <span class="pip" aria-hidden="true"></span>
+        <span>Passe <b>{{ plano_nome }}</b> · <b>{{ perguntas_restantes }}</b> perguntas restantes · até {{ acesso_ate|date:"d/m/Y" }}</span>
+      </div>
+      {% endif %}
     {% if user.is_authenticated %}
     <div class="conta">
       <button class="conta-trigger" id="conta-trigger" aria-haspopup="menu" aria-expanded="false">
@@ -59,6 +66,7 @@
       </div>
     </div>
     {% endif %}
+    </div>
   </div>
 </header>
 

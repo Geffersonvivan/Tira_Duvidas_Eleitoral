@@ -4,6 +4,7 @@
 {% block content %}
 <section class="hero">
   <div class="tabs" role="tablist">
+    <span class="tab-pill" aria-hidden="true"></span>
     <button class="tab" role="tab" aria-selected="true" data-tab="perguntas">
       <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       Perguntas eleitorais
@@ -24,7 +25,9 @@
       <div class="composer">
         <textarea id="q" placeholder="Escreva sua dúvida sobre direito, contabilidade ou impulsionamento eleitoral..."></textarea>
         <div class="composer-row">
-          <button class="send" id="btn-perguntar">Perguntar</button>
+          <button class="send" id="btn-perguntar" aria-label="Perguntar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </button>
         </div>
       </div>
       <div class="suggests">
@@ -53,5 +56,5 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/marked@13/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
-<script src="{% static 'js/app.js' %}?v=26"></script>
+<script src="{% static 'js/app.js' %}?v=27"></script>
 {% endblock %}
