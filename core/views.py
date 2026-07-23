@@ -39,4 +39,24 @@ def home(request: HttpRequest) -> HttpResponse:
         return redirect("landing")
     # A publishable key permite carregar o Clerk.js na página e manter o cookie
     # __session renovado (o token de sessão do Clerk é curto).
-    return render(request, "index.html", {"CLERK_PUBLISHABLE_KEY": settings.CLERK_PUBLISHABLE_KEY})
+    ctx = {"CLERK_PUBLISHABLE_KEY": settings.CLERK_PUBLISHABLE_KEY}
+
+    # Chip de cota no header: plano efetivo + perguntas restantes + data de acesso.
+    prof = getattr(request.user, "profile", None) if request.user.is_authenticated else None
+    if prof is not None:
+        from billing import gate
+        from billing.plans import plano_do
+        from billing.services import acesso_ate
+
+        ctx.update(
+            plano_nome=plano_do(gate.plano_efetivo(prof))["nome"],
+            perguntas_restantes=gate.restante(prof, "perguntas"),
+            acesso_ate=acesso_ate(),
+        )
+    elif not settings.CLERK_ENABLED:
+        # Modo público/local (Clerk desligado): dados de exemplo só para preview.
+        from billing.services import acesso_ate
+
+        ctx.update(plano_nome="Profissional", perguntas_restantes=583, acesso_ate=acesso_ate())
+
+    return render(request, "index.html", ctx)
